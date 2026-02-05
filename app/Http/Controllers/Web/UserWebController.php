@@ -9,6 +9,7 @@ use App\Models\DonationInvoice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class UserWebController extends Controller
 {
@@ -62,11 +63,14 @@ class UserWebController extends Controller
         return redirect('/');
     }
 
-    // --- Dashboard & Requests ---
     public function dashboard() {
-        // Show requests created by THIS user
-        $myRequests = BloodRequest::where('requester_id', Auth::id())->latest()->get();
-        return view('user.dashboard', compact('myRequests'));
+        $user = Auth::user();
+        
+        $myRequests = BloodRequest::where('requester_id', $user->id)->latest()->get();
+        
+        $myDonations = DonationInvoice::where('user_id', $user->id)->latest()->get();
+
+        return view('user.dashboard', compact('myRequests', 'myDonations'));
     }
 
     public function showCreateRequestForm() {
@@ -133,5 +137,58 @@ class UserWebController extends Controller
         Auth::user()->increment('donation_invoice_count');
 
         return redirect()->route('user.dashboard')->with('success', 'Donation submitted for verification!');
+    }
+    public function markRequestAsComplete($id) {
+        $request = BloodRequest::findOrFail($id);
+
+        if ($request->requester_id != Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $request->update(['status' => 'completed']);
+
+        return back()->with('success', 'Great! Request marked as completed.');
+    }
+    public function showProfile() {
+        return view('user.profile', ['user' => Auth::user()]);
+    }
+    public function updateProfile(Request $request) {
+        $user = Auth::user();
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20|unique:users,phone,' . $user->id,
+            'password' => 'nullable|min:6|confirmed',
+            'avatar' => 'nullable|image|max:2048', // Validate image
+        ]);
+
+        if ($request->hasFile('avatar')) {
+            if ($user->avatar) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+            
+            $path = $request->file('avatar')->store('avatars', 'public');
+            $user->avatar = $path;
+        }
+
+        $user->name = $request->name;
+        $user->phone = $request->phone;
+
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        $user->save();
+
+        return back()->with('success', 'Profile updated successfully!');
+    }
+    public function certificate($id)
+    {
+        $donation = DonationInvoice::where('user_id', auth()->id())
+                    ->where('id', $id)
+                    ->where('status', 'active')
+                    ->firstOrFail();
+
+        return view('user.certificate', compact('donation'));
     }
 }

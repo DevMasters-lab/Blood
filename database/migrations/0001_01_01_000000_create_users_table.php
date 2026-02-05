@@ -17,8 +17,7 @@ return new class extends Migration
             $table->string('phone')->unique(); // Primary Identifier
             $table->string('email')->nullable()->unique();
             $table->string('password')->nullable(); // Nullable for OTP-only flows
-            
-            // Medical Info
+            $table->string('usertype')->default('user');
             $table->enum('blood_type', ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'All'])->nullable();
 
             // KYC / Identity Verification
