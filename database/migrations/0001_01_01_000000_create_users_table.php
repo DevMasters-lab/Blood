@@ -14,9 +14,29 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
+            $table->string('phone')->unique(); // Primary Identifier
+            $table->string('email')->nullable()->unique();
+            $table->string('password')->nullable(); // Nullable for OTP-only flows
+            
+            // Medical Info
+            $table->enum('blood_type', ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'All'])->nullable();
+
+            // KYC / Identity Verification
+            $table->string('id_number')->nullable(); // Passport or National ID
+            $table->enum('kyc_status', ['pending', 'verified', 'rejected'])->default('pending');
+            $table->text('kyc_rejected_reason')->nullable();
+            $table->timestamp('kyc_verified_at')->nullable();
+            $table->foreignId('kyc_verified_by_admin_id')->nullable(); // Optional: Link to admin who verified
+
+            // Trust & Stats Counters (useful for the Trust Profile)
+            $table->integer('request_count')->default(0);
+            $table->integer('donation_invoice_count')->default(0);
+            $table->integer('verified_donation_count')->default(0);
+
+            // Account Status
+            $table->enum('status', ['active', 'blocked'])->default('active');
+            $table->timestamp('last_login_at')->nullable();
+            
             $table->rememberToken();
             $table->timestamps();
         });
