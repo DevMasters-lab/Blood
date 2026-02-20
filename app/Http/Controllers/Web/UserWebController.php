@@ -30,10 +30,14 @@ class UserWebController extends Controller
         ]);
 
         if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
+            // Prevent Admins from entering the standard User Portal
+            if (Auth::user()->usertype === 'admin') {
+                Auth::logout();
+                return back()->withErrors(['phone' => 'Administrators must login via the Admin Portal.']);
+            }
             
-            // CORRECT: Always go to the User Portal
-            return redirect()->route('user.dashboard'); 
+            $request->session()->regenerate();
+            return redirect()->route('user.dashboard');
         }
 
         return back()->withErrors(['phone' => 'Invalid credentials.']);
@@ -43,14 +47,17 @@ class UserWebController extends Controller
         $request->validate([
             'name' => 'required',
             'phone' => 'required|unique:users',
+            'blood_type' => 'required', 
             'password' => 'required|min:6',
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'phone' => $request->phone,
+            'blood_type' => $request->blood_type, 
             'password' => Hash::make($request->password),
             'status' => 'active',
+            'usertype' => 'user', 
         ]);
 
         Auth::login($user);
@@ -60,15 +67,23 @@ class UserWebController extends Controller
     public function logout(Request $request) {
         Auth::logout();
         $request->session()->invalidate();
-        return redirect('/');
+        $request->session()->regenerateToken();
+        
+        // Redirects to Home Page ('/')
+        return redirect('/'); 
     }
 
-    public function dashboard() {
-        $user = Auth::user();
-        
-        $myRequests = BloodRequest::where('requester_id', $user->id)->latest()->get();
-        
-        $myDonations = DonationInvoice::where('user_id', $user->id)->latest()->get();
+    public function dashboard()
+    {
+        $userId = auth()->id();
+
+        $myRequests = \App\Models\BloodRequest::where('requester_id', $userId)
+            ->latest()
+            ->paginate(10, ['*'], 'requests_page');
+
+        $myDonations = \App\Models\DonationInvoice::where('user_id', $userId)
+            ->latest()
+            ->paginate(10, ['*'], 'donations_page');
 
         return view('user.dashboard', compact('myRequests', 'myDonations'));
     }
