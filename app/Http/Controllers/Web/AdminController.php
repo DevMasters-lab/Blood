@@ -208,4 +208,32 @@ class AdminController extends Controller
         // 3. Redirect back with success message
         return redirect()->back()->with('success', 'Localization settings saved successfully!');
     }
+
+    /**
+     * Show KYC Verification Queue
+     */
+    public function kyc()
+    {
+        // When database is ready: 
+        // $pendingKyc = User::where('kyc_status', 'pending')->paginate(10);
+        // return view('admin.kyc', compact('pendingKyc'));
+        
+        return view('admin.kyc'); 
+    }
+
+    /**
+     * Show Donor Proofs (Responses)
+     */
+    public function responses()
+    {
+        return view('admin.responses');
+    }
+
+    /**
+     * Show Analytics
+     */
+    public function reports()
+    {
+        return view('admin.reports');
+    }
 }

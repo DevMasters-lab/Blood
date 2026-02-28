@@ -42,34 +42,54 @@
 
                         <p class="px-5 text-[10px] font-black text-gray-600 uppercase mt-10 mb-4 tracking-[0.2em]">Management</p>
                         
+                        {{-- 1. Blood Requests --}}
                         <a href="{{ route('admin.requests') }}" class="flex items-center px-5 py-4 rounded-2xl {{ request()->routeIs('admin.requests') ? 'bg-[#D32F2F] text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
                             <i class="fa-solid fa-hand-holding-medical w-6 text-center"></i>
                             <span class="ml-4 font-bold text-sm">Blood Requests</span>
                         </a>
+
+                        {{-- 2. NEW: Donor Proofs --}}
+                        <a href="{{ route('admin.responses') ?? '#' }}" class="flex items-center px-5 py-4 rounded-2xl {{ request()->routeIs('admin.responses') ? 'bg-[#D32F2F] text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                            <i class="fa-solid fa-file-medical w-6 text-center"></i>
+                            <span class="ml-4 font-bold text-sm">Donor Proofs</span>
+                        </a>
+
+                        {{-- 3. Verify Invoices --}}
                         <a href="{{ route('admin.donations') }}" class="flex items-center px-5 py-4 rounded-2xl {{ request()->routeIs('admin.donations') ? 'bg-[#D32F2F] text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
                             <i class="fa-solid fa-file-invoice w-6 text-center"></i>
                             <span class="ml-4 font-bold text-sm">Verify Invoices</span>
                         </a>
+
+                        {{-- 4. NEW: KYC Verifications --}}
+                        <a href="{{ route('admin.kyc') ?? '#' }}" class="flex items-center px-5 py-4 rounded-2xl {{ request()->routeIs('admin.kyc') ? 'bg-[#D32F2F] text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                            <i class="fa-solid fa-id-card w-6 text-center"></i>
+                            <span class="ml-4 font-bold text-sm">KYC Verifications</span>
+                            <span class="ml-auto bg-[#D32F2F] text-white text-[9px] font-black px-2 py-0.5 rounded-md shadow-sm animate-pulse {{ request()->routeIs('admin.kyc') ? 'bg-white text-[#D32F2F]' : '' }}">NEW</span>
+                        </a>
+
+                        {{-- 5. User Directory --}}
                         <a href="{{ route('admin.users') }}" class="flex items-center px-5 py-4 rounded-2xl {{ request()->routeIs('admin.users') ? 'bg-[#D32F2F] text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
                             <i class="fa-solid fa-users-gear w-6 text-center"></i>
                             <span class="ml-4 font-bold text-sm">User Directory</span>
                         </a>
 
-                        {{-- NEW: CONFIGURATION SECTION --}}
+                        {{-- 6. NEW: Analytics --}}
+                        <a href="{{ route('admin.reports') ?? '#' }}" class="flex items-center px-5 py-4 rounded-2xl {{ request()->routeIs('admin.reports') ? 'bg-[#D32F2F] text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                            <i class="fa-solid fa-chart-line w-6 text-center"></i>
+                            <span class="ml-4 font-bold text-sm">Analytics & Reports</span>
+                        </a>
+
                         <p class="px-5 text-[10px] font-black text-gray-600 uppercase mt-10 mb-4 tracking-[0.2em]">Configuration</p>
                         
-                        {{-- Make sure to create this route ('admin.settings') in your web.php --}}
                         <a href="{{ route('admin.settings') ?? '#' }}" class="flex items-center px-5 py-4 rounded-2xl {{ request()->routeIs('admin.settings') ? 'bg-[#D32F2F] text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
                             <i class="fa-solid fa-gear w-6 text-center"></i>
                             <span class="ml-4 font-bold text-sm">Settings</span>
                         </a>
-                        {{-- Localization Settings --}}
+                        
                         <a href="{{ route('admin.settings.localization') ?? '#' }}" class="flex items-center px-5 py-4 rounded-2xl {{ request()->routeIs('admin.settings.localization') ? 'bg-[#D32F2F] text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
                             <i class="fa-solid fa-earth-asia w-6 text-center"></i>
                             <span class="ml-4 font-bold text-sm">Localization</span>
                         </a>
-                        
-
                     </div>
 
                     <form action="{{ route('logout') }}" method="POST" class="mt-10 pt-6 border-t border-white/5">

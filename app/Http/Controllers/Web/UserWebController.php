@@ -46,9 +46,12 @@ class UserWebController extends Controller
     public function register(Request $request) {
         $request->validate([
             'name' => 'required',
-            'phone' => 'required|unique:users',
+            'phone' => 'required|string|unique:users|regex:/^0[0-9]{8,9}$/',
             'blood_type' => 'required', 
-            'password' => 'required|min:6',
+            'password' => 'required|string|min:6|confirmed',
+        ], [
+            'phone.regex' => 'Please enter a phone number that starts with 0 and contains only numbers.',
+            'password.confirmed' => 'Password confirmation does not match. Please re-enter your password.',
         ]);
 
         $user = User::create([

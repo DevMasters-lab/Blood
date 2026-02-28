@@ -278,54 +278,107 @@
         <div id="requests-grid">
             @if($requests->isEmpty())
                 <div class="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-300">
-                    <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-6">
+                    <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-400 mb-6">
                         <i class="fa-regular fa-folder-open text-4xl"></i>
                     </div>
                     <h3 class="text-xl font-bold text-gray-800">No Requests Found</h3>
                     <p class="text-gray-500 mt-2 max-w-sm text-center">There are no urgent requests matching your search criteria right now.</p>
                 </div>
             @else
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
                     @foreach($requests as $req)
-                    <div class="group bg-white rounded-3xl shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
-                        <div class="p-1">
-                            <div class="bg-red-50 rounded-t-[1.3rem] p-5 flex justify-between items-start">
-                                <div>
-                                    <span class="inline-flex items-center gap-1.5 bg-white text-red-600 text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider shadow-sm mb-2">
-                                        <span class="relative flex h-2 w-2">
-                                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                          <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                                        </span>
-                                        Urgent
-                                    </span>
-                                    <h3 class="text-lg font-bold text-gray-900 leading-tight">{{ $req->hospital_name }}</h3>
-                                </div>
-                                <div class="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-red-200 group-hover:scale-110 transition-transform">
-                                    <span class="font-black text-lg">{{ $req->blood_type }}</span>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="bg-white rounded-[1.5rem] p-6 border border-gray-100 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] hover:shadow-[0_10px_40px_-10px_rgba(0,0,0,0.12)] transition-all duration-300 flex flex-col h-full relative overflow-hidden group">
                         
-                        <div class="px-6 py-4">
-                            <div class="space-y-3">
-                                <div class="flex items-center text-sm text-gray-600">
-                                    <div class="w-8 flex justify-center text-red-400 mr-2"><i class="fa-solid fa-user-injured"></i></div>
-                                    <span class="font-medium">{{ $req->patient_name ?? 'Anonymous Patient' }}</span>
+                        {{-- Top Accent Line --}}
+                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 to-red-600"></div>
+
+                        {{-- Header: Badge, Hospital & Blood Type --}}
+                        <div class="flex justify-between items-start mb-6 pt-2">
+                            <div class="pr-3">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-50 text-red-600 text-[10px] font-bold uppercase tracking-wider mb-2 border border-red-100/50">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                                    Urgent Need
+                                </span>
+                                <h3 class="text-xl font-black text-gray-900 leading-snug line-clamp-2 group-hover:text-red-600 transition-colors">{{ $req->hospital_name }}</h3>
+                            </div>
+                            <div class="w-12 h-12 shrink-0 bg-red-600 text-white rounded-xl flex items-center justify-center font-black text-lg shadow-sm transform group-hover:scale-105 transition-transform">
+                                {{ $req->blood_type }}
+                            </div>
+                        </div>
+
+                        {{-- Patient & Contact Info --}}
+                        <div class="space-y-4 mb-6 flex-grow">
+                            {{-- Patient --}}
+                            <div class="flex items-start gap-3">
+                                <div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100 mt-0.5 group-hover:bg-red-50 group-hover:text-red-500 transition-colors">
+                                    <i class="fa-solid fa-user-injured text-xs"></i>
                                 </div>
-                                <div class="flex items-center text-sm text-gray-600">
-                                    <div class="w-8 flex justify-center text-red-400 mr-2"><i class="fa-solid fa-calendar-day"></i></div>
-                                    <span>Needed by: <span class="text-red-600 font-bold">{{ $req->needed_date->format('d M Y') }}</span></span>
+                                <div>
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Patient</p>
+                                    <p class="text-sm font-bold text-gray-800 truncate">{{ $req->patient_name ?? 'Anonymous' }}</p>
+                                </div>
+                            </div>
+
+                            {{-- Phone --}}
+                            <div class="flex items-start gap-3">
+                                <div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100 mt-0.5 group-hover:bg-red-50 group-hover:text-red-500 transition-colors">
+                                    <i class="fa-solid fa-phone text-xs"></i>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Contact Phone</p>
+                                    <p class="text-sm font-bold text-gray-800">{{ $req->contact_phone ?? 'No number' }}</p>
                                 </div>
                             </div>
                         </div>
-                        <div class="px-6 pb-6 mt-2">
-                            <a href="{{ route('request.show', $req->id) }}" class="block w-full bg-gray-900 text-white text-center py-3.5 rounded-2xl font-bold text-sm hover:bg-red-600 transition-colors shadow-lg group-hover:shadow-red-500/30">
-                                View Contact Details
-                            </a>
+
+                        {{-- Info Pills (Location & Units) --}}
+                        <div class="flex flex-wrap gap-2 mb-6">
+                            <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 text-gray-700 text-xs font-bold border border-gray-100">
+                                <i class="fa-solid fa-droplet text-red-500"></i> {{ $req->units_needed ?? '1' }} Bag(s)
+                            </div>
+                            <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 text-gray-700 text-xs font-bold border border-gray-100">
+                                <i class="fa-solid fa-location-dot text-red-500"></i> <span class="truncate max-w-[120px]">{{ $req->location ?? 'Phnom Penh' }}</span>
+                            </div>
                         </div>
+
+                        {{-- Footer: Dates, Requester & Buttons --}}
+                        <div class="pt-5 border-t border-gray-100 mt-auto">
+                            
+                            {{-- Added Requested By under Needed By --}}
+                            <div class="space-y-3 mb-5">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Needed By</span>
+                                    <span class="text-xs font-black text-red-600 bg-red-50 px-2.5 py-1 rounded-md border border-red-100">{{ $req->needed_date->format('d M Y') }}</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Requested By</span>
+                                    <span class="text-sm font-bold text-gray-800">{{ $req->requester->name ?? 'User' }}</span>
+                                </div>
+                            </div>
+                            {{-- <div class="px-6 pb-6 mt-2">
+                                <a href="{{ route('request.show', $req->id) }}" class="block w-full bg-gray-900 text-white text-center py-3.5 rounded-2xl font-bold text-sm hover:bg-red-600 transition-colors shadow-lg group-hover:shadow-red-500/30">
+                                    View Contact Details
+                                </a>
+                            </div> --}}
+                            <div class="flex gap-3">
+                                {{-- Fixed Call Button (Added padding, moved text outside of <i> tag) --}}
+                                <a href="tel:{{ $req->contact_phone ?? '' }}" class="px-5 h-12 shrink-0 bg-white border border-gray-200 text-gray-700 rounded-xl flex items-center justify-center gap-2 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors shadow-sm font-bold text-sm">
+                                    <i class="fa-solid fa-phone"></i> Call
+                                </a>
+                                
+                                
+                                {{-- Primary Action Button --}}
+                                <a href="{{ auth()->check() ? route('user.donate') : route('user.login') }}" class="flex-1 bg-red-600 text-white flex items-center justify-center gap-2 rounded-xl font-bold text-sm hover:bg-red-700 transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 border border-transparent">
+                                    <i class="fa-solid fa-hand-holding-medical"></i> I Can Donate
+                                </a>
+                            </div>
+                        </div>
+
                     </div>
                     @endforeach
                 </div>
+                
+                {{-- Pagination --}}
                 <div class="mt-12 flex justify-end">
                     {{ $requests->appends(request()->query())->fragment('requests')->links() }}
                 </div>

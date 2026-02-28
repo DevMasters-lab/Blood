@@ -121,4 +121,10 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     // Localization Settings
     Route::get('/settings/localization', [AdminController::class, 'localization'])->name('admin.settings.localization');
     Route::post('/settings/localization', [AdminController::class, 'updateLocalization'])->name('admin.settings.localization.update');
+
+    // Admin Management Additions
+    Route::get('/kyc', [AdminController::class, 'kyc'])->name('admin.kyc');
+    Route::post('/kyc/{id}/status', [AdminController::class, 'updateKycStatus'])->name('admin.kyc.status');
+    Route::get('/responses', [AdminController::class, 'responses'])->name('admin.responses');
+    Route::get('/reports', [AdminController::class, 'reports'])->name('admin.reports');
 });
