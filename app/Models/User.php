@@ -75,4 +75,9 @@ class User extends Authenticatable
     {
         return $this->morphOne(ProofFile::class, 'owner')->where('file_type', 'id_photo');
     }
+
+    public function proofFiles()
+    {
+        return $this->morphMany(ProofFile::class, 'fileable');
+    }
 }

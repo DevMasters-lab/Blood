@@ -7,7 +7,6 @@
     <div class="flex justify-between items-center mb-8">
         <div>
             <h2 class="text-3xl font-black text-gray-900 tracking-tight">Request Blood</h2>
-            <p class="text-sm text-gray-500 mt-1">Fill out the form below to create an urgent blood request.</p>
         </div>
         <a href="{{ route('user.dashboard') }}" class="flex items-center gap-2 px-5 py-2.5 bg-white text-gray-600 font-bold rounded-xl shadow-sm border border-gray-100 hover:bg-red-50 hover:text-red-600 transition-colors">
             <i class="fa-solid fa-arrow-left text-sm"></i> Dashboard

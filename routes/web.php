@@ -2,8 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Web\AdminController;
-use App\Http\Controllers\Web\WebAuthController; // For Admin Login
-use App\Http\Controllers\Web\UserWebController; // For User Login
+use App\Http\Controllers\Web\WebAuthController;
+use App\Http\Controllers\Web\UserWebController;
 use App\Models\BloodRequest;
 use Illuminate\Http\Request;
 
@@ -76,12 +76,16 @@ Route::middleware(['auth'])->prefix('user')->group(function () {
     Route::get('/profile', [UserWebController::class, 'showProfile'])->name('user.profile');
     Route::put('/profile', [UserWebController::class, 'updateProfile'])->name('user.profile.update');
 
+    // --- NEW: INVOICE WALLET ---
+    Route::get('/wallet', [UserWebController::class, 'wallet'])->name('user.wallet');
+
     // Donation Logic
     Route::get('/donate', [UserWebController::class, 'showDonateForm'])->name('user.donate');
     Route::post('/donate', [UserWebController::class, 'storeDonation'])->name('user.donate.store');
     Route::get('/donation/{id}/certificate', [UserWebController::class, 'certificate'])->name('user.certificate');
 
-    // Request Logic
+    // Request Logic 
+    // (Move these to Public section if you want Guest Requests to work without logging in)
     Route::get('/requests/create', [UserWebController::class, 'showCreateRequestForm'])->name('user.requests.create');
     Route::post('/requests', [UserWebController::class, 'storeRequest'])->name('user.requests.store');
     Route::put('/requests/{id}/complete', [UserWebController::class, 'markRequestAsComplete'])->name('user.requests.complete');
@@ -103,9 +107,14 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::post('/requests/{id}/status', [AdminController::class, 'updateRequestStatus'])->name('admin.requests.status');
     Route::delete('/requests/{id}', [AdminController::class, 'deleteRequest'])->name('admin.requests.delete');
 
-    // Donation Invoice Management
+    // Old Donation Records Management (If keeping)
     Route::get('/donations', [AdminController::class, 'donations'])->name('admin.donations');
     Route::post('/donations/{id}/status', [AdminController::class, 'updateDonationStatus'])->name('admin.donations.status');
+
+    // --- NEW: VERIFY INVOICES (The new Donation Invoice Module) ---
+    Route::get('/invoices', [AdminController::class, 'verifyInvoices'])->name('admin.invoices');
+    Route::post('/invoices/{id}/approve', [AdminController::class, 'approveInvoice'])->name('admin.invoices.approve');
+    Route::post('/invoices/{id}/reject', [AdminController::class, 'rejectInvoice'])->name('admin.invoices.reject');
 
     // User Management
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
@@ -122,9 +131,11 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::get('/settings/localization', [AdminController::class, 'localization'])->name('admin.settings.localization');
     Route::post('/settings/localization', [AdminController::class, 'updateLocalization'])->name('admin.settings.localization.update');
 
-    // Admin Management Additions
+    // Admin Management Additions (KYC & Reports)
     Route::get('/kyc', [AdminController::class, 'kyc'])->name('admin.kyc');
-    Route::post('/kyc/{id}/status', [AdminController::class, 'updateKycStatus'])->name('admin.kyc.status');
+    Route::post('/kyc/{id}/approve', [AdminController::class, 'approveKyc'])->name('admin.kyc.approve');
+    Route::post('/kyc/{id}/reject', [AdminController::class, 'rejectKyc'])->name('admin.kyc.reject');
     Route::get('/responses', [AdminController::class, 'responses'])->name('admin.responses');
     Route::get('/reports', [AdminController::class, 'reports'])->name('admin.reports');
 });
+

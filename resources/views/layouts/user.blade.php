@@ -72,7 +72,9 @@
                             <a href="{{ route('user.dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 font-medium transition">
                                 <i class="fa-solid fa-house mr-2 w-4 text-center"></i> My Dashboard
                             </a>
-
+                            <a href="{{ route('user.wallet') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 font-medium transition">
+                                <i class="fa-solid fa-wallet mr-2 w-4 text-center"></i> My Wallet
+                            </a>
                             <a href="{{ route('user.profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 font-medium transition">
                                 <i class="fa-solid fa-user-gear mr-2 w-4 text-center"></i> Profile Settings
                             </a>

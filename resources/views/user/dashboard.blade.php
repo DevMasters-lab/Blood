@@ -90,9 +90,16 @@
 
         {{-- DONATION HISTORY --}}
         <div class="bg-white rounded-[3rem] p-10 shadow-sm border border-gray-50">
+            
+            {{-- NEW: UPDATED HEADER WITH WALLET BUTTON --}}
             <div class="flex justify-between items-center mb-10">
                 <h3 class="text-2xl font-black text-gray-900 tracking-tight">Donation History</h3>
-                <i class="fa-solid fa-certificate text-blue-100 text-4xl"></i>
+                <div class="flex items-center gap-4">
+                    <a href="{{ route('user.wallet') }}" class="flex items-center gap-2 bg-blue-50 text-blue-600 px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm border border-blue-100 hover:shadow-lg hover:-translate-y-0.5">
+                        <i class="fa-solid fa-wallet text-base"></i> Open Wallet
+                    </a>
+                    <i class="fa-solid fa-certificate text-blue-100 text-4xl hidden sm:block"></i>
+                </div>
             </div>
 
             <div class="space-y-8">

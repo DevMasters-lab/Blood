@@ -11,12 +11,13 @@ class ProofFile extends Model
 
     protected $guarded = [];
 
-    // CHANGE THIS FROM 'owner' TO 'fileable'
+    // This connects the file to the user or invoice
     public function fileable()
     {
         return $this->morphTo();
     }
     
+    // Helper to get the full image URL
     public function getUrlAttribute()
     {
         return asset('storage/' . $this->path);

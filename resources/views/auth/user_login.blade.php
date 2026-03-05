@@ -20,10 +20,7 @@
         
         {{-- Header Icon & Title --}}
         <div class="text-center mb-10">
-            <div class="w-20 h-20 bg-gradient-to-br from-red-50 to-red-100 text-red-600 rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-inner border border-red-200 transform rotate-3">
-                <i class="fa-solid fa-right-to-bracket text-3xl pr-1 transform -rotate-3"></i>
-            </div>
-            <h2 class="text-3xl font-black text-gray-900 tracking-tight">Welcome Back</h2>
+            <h2 class="text-3xl font-black text-gray-900 tracking-tight">User Login</h2>
             <p class="text-gray-500 mt-2 font-medium text-sm">Log in to request blood or pledge a donation.</p>
         </div>
 

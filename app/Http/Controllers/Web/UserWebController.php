@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\BloodRequest;
 use App\Models\DonationInvoice;
+use App\Models\ProofFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -30,12 +31,27 @@ class UserWebController extends Controller
         ]);
 
         if (Auth::attempt($credentials)) {
-            // Prevent Admins from entering the standard User Portal
-            if (Auth::user()->usertype === 'admin') {
+            $user = Auth::user();
+
+            // 1. Prevent Admins from entering the standard User Portal
+            if ($user->usertype === 'admin') {
                 Auth::logout();
                 return back()->withErrors(['phone' => 'Administrators must login via the Admin Portal.']);
             }
+
+            // 2. Block Pending Users
+            if ($user->kyc_status === 'pending') {
+                Auth::logout();
+                return back()->withErrors(['phone' => 'Your account is under review by an Admin. You cannot log in yet.']);
+            }
+
+            // 3. Block Rejected Users
+            if ($user->kyc_status === 'rejected') {
+                Auth::logout();
+                return back()->withErrors(['phone' => 'Your ID verification was rejected. Please register a new account.']);
+            }
             
+            // If they are Verified, let them in!
             $request->session()->regenerate();
             return redirect()->route('user.dashboard');
         }
@@ -44,27 +60,48 @@ class UserWebController extends Controller
     }
 
     public function register(Request $request) {
+        // 1. Validate all fields
         $request->validate([
-            'name' => 'required',
+            'name' => 'required|string|max:150',
             'phone' => 'required|string|unique:users|regex:/^0[0-9]{8,9}$/',
-            'blood_type' => 'required', 
+            'blood_type' => 'required|string', 
+            'id_number' => 'required|string|max:50',
+            'id_photo' => 'required|image|mimes:jpeg,png,jpg|max:5120', 
             'password' => 'required|string|min:6|confirmed',
         ], [
             'phone.regex' => 'Please enter a phone number that starts with 0 and contains only numbers.',
             'password.confirmed' => 'Password confirmation does not match. Please re-enter your password.',
+            'id_photo.required' => 'You must upload an official ID or Passport photo to register.',
         ]);
 
+        // 2. Create the User with Pending KYC Status
         $user = User::create([
             'name' => $request->name,
             'phone' => $request->phone,
             'blood_type' => $request->blood_type, 
+            'id_number' => $request->id_number,
+            'kyc_status' => 'pending', 
             'password' => Hash::make($request->password),
             'status' => 'active',
             'usertype' => 'user', 
         ]);
 
-        Auth::login($user);
-        return redirect()->route('user.dashboard');
+        // 3. Handle ID Photo Upload
+        if ($request->hasFile('id_photo')) {
+            $path = $request->file('id_photo')->store('proofs/kyc', 'public');
+            
+            ProofFile::create([
+                'fileable_type' => User::class,
+                'fileable_id' => $user->id,
+                'path' => $path,
+                'original_name' => $request->file('id_photo')->getClientOriginalName(),
+                'file_type' => 'id_photo',
+                'status' => 'active'
+            ]);
+        }
+
+        // 4. DO NOT log them in. Redirect to the login page with a message.
+        return redirect()->route('user.login')->with('success', 'Registration submitted! You can log in once an Admin verifies your ID.');
     }
 
     public function logout(Request $request) {
@@ -72,7 +109,6 @@ class UserWebController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         
-        // Redirects to Home Page ('/')
         return redirect('/'); 
     }
 
@@ -114,48 +150,57 @@ class UserWebController extends Controller
 
         return redirect()->route('user.dashboard')->with('success', 'Request Created Successfully!');
     }
+    
+    // --- DONATION INVOICE MODULE ---
+    
     public function showDonateForm() {
         return view('user.donate');
     }
 
     public function storeDonation(Request $request) {
+        // Added validation for the manual expiry date
         $request->validate([
-            'blood_bank_name' => 'required',
+            'blood_bank_name' => 'required|string|max:255',
             'donation_date' => 'required|date',
-            'proof_file' => 'required|file|mimes:jpg,png,pdf|max:5120', // 5MB max
+            'expiry_date' => 'required|date|after:donation_date', // Manual input from form
+            'blood_type' => 'nullable|string',
+            'proof_file' => 'required|file|mimes:jpg,png,pdf|max:5120', 
         ]);
 
-        // 1. Calculate Expiry (1 Month rule)
-        $donationDate = \Carbon\Carbon::parse($request->donation_date);
-        $expiryDate = $donationDate->copy()->addMonth();
-
-        // 2. Create Invoice Record
         $invoice = DonationInvoice::create([
             'user_id' => Auth::id(),
             'blood_bank_name' => $request->blood_bank_name,
-            'donation_date' => $donationDate,
-            'expiry_date' => $expiryDate,
-            'blood_type' => $request->blood_type, // Optional
+            'donation_date' => $request->donation_date,
+            'expiry_date' => $request->expiry_date, // Saved manually
+            'blood_type' => $request->blood_type,
             'status' => 'pending'
         ]);
 
-        // 3. Upload Proof File
         if ($request->hasFile('proof_file')) {
             $path = $request->file('proof_file')->store('proofs/invoices', 'public');
             
-            // Link the file to the invoice
-            $invoice->proofFile()->create([
+            ProofFile::create([
+                'fileable_type' => DonationInvoice::class,
+                'fileable_id' => $invoice->id,
                 'path' => $path,
                 'original_name' => $request->file('proof_file')->getClientOriginalName(),
                 'file_type' => 'invoice_proof',
+                'status' => 'active'
             ]);
         }
 
-        // 4. Update User Stats (Optional)
-        Auth::user()->increment('donation_invoice_count');
-
-        return redirect()->route('user.dashboard')->with('success', 'Donation submitted for verification!');
+        // Redirects to the new Wallet instead of the dashboard
+        return redirect()->route('user.wallet')->with('success', 'Donation invoice submitted! Waiting for Admin verification.');
     }
+
+    // THE MISSING WALLET METHOD
+    public function wallet() {
+        $invoices = DonationInvoice::where('user_id', Auth::id())->latest()->get();
+        return view('user.wallet', compact('invoices'));
+    }
+    
+    // -------------------------------
+    
     public function markRequestAsComplete($id) {
         $request = BloodRequest::findOrFail($id);
 
@@ -167,9 +212,11 @@ class UserWebController extends Controller
 
         return back()->with('success', 'Great! Request marked as completed.');
     }
+    
     public function showProfile() {
         return view('user.profile', ['user' => Auth::user()]);
     }
+    
     public function updateProfile(Request $request) {
         $user = Auth::user();
 
@@ -177,7 +224,7 @@ class UserWebController extends Controller
             'name' => 'required|string|max:255',
             'phone' => 'required|string|max:20|unique:users,phone,' . $user->id,
             'password' => 'nullable|min:6|confirmed',
-            'avatar' => 'nullable|image|max:2048', // Validate image
+            'avatar' => 'nullable|image|max:2048', 
         ]);
 
         if ($request->hasFile('avatar')) {
@@ -200,6 +247,7 @@ class UserWebController extends Controller
 
         return back()->with('success', 'Profile updated successfully!');
     }
+    
     public function certificate($id)
     {
         $donation = DonationInvoice::where('user_id', auth()->id())

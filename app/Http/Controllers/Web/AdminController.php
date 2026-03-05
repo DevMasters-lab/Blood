@@ -9,6 +9,10 @@ use App\Models\DonationInvoice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use App\Models\Setting;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str; // <-- ADDED: Required for generating Invoice Codes
 
 class AdminController extends Controller
 {
@@ -79,6 +83,21 @@ class AdminController extends Controller
         return back()->with('success', 'User account deleted successfully.');
     }
 
+    public function updateUserBloodType(Request $request, $id)
+    {
+        // 1. Validate the incoming blood type selection
+        $request->validate([
+            'blood_type' => 'required|string|max:3'
+        ]);
+
+        // 2. Find the user and update their record silently
+        $user = User::findOrFail($id);
+        $user->blood_type = $request->blood_type;
+        $user->save(); 
+
+        return back()->with('success', 'User blood group corrected silently.');
+    }
+
     // =========================================================================
     // 3. BLOOD REQUEST MANAGEMENT
     // =========================================================================
@@ -103,7 +122,7 @@ class AdminController extends Controller
     }
 
     // =========================================================================
-    // 4. DONATION INVOICE MANAGEMENT
+    // 4. OLD DONATIONS MANAGEMENT (If keeping legacy module)
     // =========================================================================
     public function donations()
     {
@@ -131,70 +150,82 @@ class AdminController extends Controller
         return back()->with('success', 'Status updated silently in the Master Database.');
     }
 
-    public function updateUserBloodType(Request $request, $id)
+    // =========================================================================
+    // 5. NEW INVOICE VERIFICATION MODULE
+    // =========================================================================
+    public function verifyInvoices()
     {
-        // 1. Validate the incoming blood type selection
-        $request->validate([
-            'blood_type' => 'required|string|max:3'
-        ]);
+        $pendingInvoices = DonationInvoice::with(['user', 'proofFile'])
+            ->where('status', 'pending')
+            ->latest()
+            ->get();
+            
+        $activeInvoicesCount = DonationInvoice::where('status', 'active')->count();
 
-        // 2. Find the user and update their record silently
-        $user = User::findOrFail($id);
-        $user->blood_type = $request->blood_type;
-        $user->save(); // No Mail::to() triggered here
-
-        return back()->with('success', 'User blood group corrected silently.');
+        return view('admin.verify_invoices', compact('pendingInvoices', 'activeInvoicesCount'));
     }
 
-    /**
-     * Show the Frontend Settings page.
-     */
+    public function approveInvoice($id)
+    {
+        $invoice = DonationInvoice::findOrFail($id);
+        
+        // Generate Unique Invoice Code (e.g., INV-8A9B2C)
+        $invoiceCode = 'INV-' . strtoupper(Str::random(6));
+
+        $invoice->update([
+            'status' => 'active',
+            'invoice_code' => $invoiceCode
+        ]);
+
+        // Increment user's verified stats
+        $invoice->user->increment('donation_invoice_count');
+
+        return back()->with('success', 'Invoice Approved! Code ' . $invoiceCode . ' generated.');
+    }
+
+    public function rejectInvoice($id)
+    {
+        $invoice = DonationInvoice::findOrFail($id);
+        $invoice->update(['status' => 'rejected']);
+
+        return back()->with('error', 'Donation submission rejected.');
+    }
+
+
+    // =========================================================================
+    // 6. PLATFORM CONFIGURATION & SETTINGS
+    // =========================================================================
     public function settings()
     {
-        // If you create a Settings table later, you can fetch data here:
-        // $settings = Setting::pluck('value', 'key')->toArray();
-        // return view('admin.settings', compact('settings'));
-
-        return view('admin.settings'); // Make sure your blade file is named settings.blade.php in the admin folder
+        $settings = Setting::pluck('value', 'key')->toArray();
+        return view('admin.settings', compact('settings'));
     }
 
-    /**
-     * Update the Frontend Settings.
-     */
     public function updateSettings(Request $request)
     {
-        // 1. Validate the incoming data
-        $request->validate([
-            'hero_title' => 'required|string|max:255',
-            'hero_subtitle' => 'required|string',
-            'contact_email' => 'required|email',
-            'contact_location' => 'required|string',
-            'facebook_url' => 'nullable|url',
-            'telegram_url' => 'nullable|url',
-        ]);
+        $data = $request->except(['_token']);
 
-        // 2. Save the settings to the database
-        // (Note: You will need a Setting model/table to actually save these to the database permanently)
-        // Example:
-        // foreach($request->except('_token') as $key => $value) {
-        //     Setting::updateOrCreate(['key' => $key], ['value' => $value ?? '']);
-        // }
+        // Handle the Toggle Switches
+        $data['maintenance_mode'] = $request->has('maintenance_mode') ? '1' : '0';
+        $data['allow_guest_requests'] = $request->has('allow_guest_requests') ? '1' : '0';
 
-        // 3. Redirect back with a success message
-        return redirect()->back()->with('success', 'Frontend settings updated successfully!');
+        foreach ($data as $key => $value) {
+            Setting::updateOrCreate(
+                ['key' => $key],
+                ['value' => $value]
+            );
+        }
+
+        return redirect()->back()->with('success', 'Platform settings updated successfully.');
     }
 
     public function localization()
     {
-        return view('admin.localization'); // You will create resources/views/admin/localization.blade.php next!
+        return view('admin.localization');
     }
 
-    /**
-     * Update the Localization Settings.
-     */
     public function updateLocalization(Request $request)
     {
-        // 1. Validate the data
         $request->validate([
             'default_language' => 'required|string',
             'timezone' => 'required|string',
@@ -203,35 +234,59 @@ class AdminController extends Controller
             'phone_code' => 'required|string',
         ]);
 
-        // 2. Save settings to your database/config here...
-
-        // 3. Redirect back with success message
         return redirect()->back()->with('success', 'Localization settings saved successfully!');
     }
 
-    /**
-     * Show KYC Verification Queue
-     */
+    // =========================================================================
+    // 7. KYC & REPORTS
+    // =========================================================================
     public function kyc()
     {
-        // When database is ready: 
-        // $pendingKyc = User::where('kyc_status', 'pending')->paginate(10);
-        // return view('admin.kyc', compact('pendingKyc'));
-        
-        return view('admin.kyc'); 
+        $pendingUsers = User::where('kyc_status', 'pending')
+            ->where('usertype', 'user')
+            ->with(['proofFiles' => function($query) {
+                $query->where('file_type', 'id_photo')->latest();
+            }])
+            ->latest()
+            ->get();
+
+        $pendingCount = $pendingUsers->count();
+        $verifiedTodayCount = User::where('kyc_status', 'verified')->whereDate('updated_at', Carbon::today())->count();
+        $rejectedCount = User::where('kyc_status', 'rejected')->count();
+
+        return view('admin.kyc', compact('pendingUsers', 'pendingCount', 'verifiedTodayCount', 'rejectedCount'));
     }
 
-    /**
-     * Show Donor Proofs (Responses)
-     */
+    public function approveKyc($id)
+    {
+        $user = User::findOrFail($id);
+        $user->update(['kyc_status' => 'verified']);
+
+        return back()->with('success', $user->name . ' has been verified and added to the User Directory.');
+    }
+
+    public function rejectKyc($id)
+    {
+        $user = User::findOrFail($id);
+        
+        // Delete their invalid ID photo from your server storage
+        foreach($user->proofFiles as $file) {
+            Storage::disk('public')->delete($file->path);
+            $file->delete();
+        }
+
+        // Delete the user entirely
+        $userName = $user->name;
+        $user->delete();
+
+        return back()->with('error', $userName . ' was rejected and deleted. They must register again with valid documents.');
+    }
+
     public function responses()
     {
         return view('admin.responses');
     }
 
-    /**
-     * Show Analytics
-     */
     public function reports()
     {
         return view('admin.reports');
