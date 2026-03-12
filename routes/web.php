@@ -136,4 +136,8 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::post('/kyc/{id}/approve', [AdminController::class, 'approveKyc'])->name('admin.kyc.approve');
     Route::post('/kyc/{id}/reject', [AdminController::class, 'rejectKyc'])->name('admin.kyc.reject');
     Route::get('/reports', [AdminController::class, 'reports'])->name('admin.reports');
+
+    // Admin Profile (Optional)
+    Route::get('/profile', [AdminController::class, 'profile'])->name('admin.profile');
+    Route::put('/profile', [AdminController::class, 'updateProfile'])->name('admin.profile.update');
 });

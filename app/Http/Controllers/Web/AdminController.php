@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Models\Setting;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str; // <-- ADDED: Required for generating Invoice Codes
 
@@ -317,5 +318,49 @@ class AdminController extends Controller
             'totalRequests', 'completedRequests', 'expiredRequests', 'verifiedDonations',
             'completedPct', 'reservedPct', 'openPct', 'expiredCancelledPct', 'popularBloodTypes'
         ));
+    }
+
+    // =========================================================================
+    // 9. ADMIN ACCOUNT SETTINGS
+    // =========================================================================
+    public function profile()
+    {
+        $user = auth()->user();
+        return view('admin.profile', compact('user'));
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = auth()->user();
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'phone' => 'nullable|string|max:20',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'password' => 'nullable|min:6|confirmed',
+        ]);
+
+        // Handle Avatar Upload
+        if ($request->hasFile('avatar')) {
+            if ($user->avatar) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+            $user->avatar = $request->file('avatar')->store('avatars', 'public');
+        }
+
+        // Update Base Details
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->phone = $request->phone;
+
+        // Update Password if provided
+        if ($request->filled('password')) {
+            $user->password = \Illuminate\Support\Facades\Hash::make($request->password);
+        }
+
+        $user->save();
+
+        return back()->with('success', 'Admin profile updated successfully.');
     }
 }

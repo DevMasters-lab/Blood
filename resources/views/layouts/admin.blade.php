@@ -34,6 +34,9 @@
 
                 <nav class="flex flex-col justify-between flex-1">
                     <div class="space-y-2">
+
+                        <p class="px-5 text-[10px] font-black text-gray-600 uppercase mt-10 mb-4 tracking-[0.2em]">Overview</p>
+
                         {{-- 1. Dashboard --}}
                         <a href="{{ route('admin.dashboard') }}" 
                            class="flex items-center px-5 py-4 rounded-2xl transition-all duration-300 {{ request()->routeIs('admin.dashboard') ? 'bg-[#D32F2F] text-white shadow-xl shadow-red-900/20 translate-x-2' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
@@ -41,7 +44,7 @@
                             <span class="ml-4 font-bold text-sm">Dashboard</span>
                         </a>
 
-                        {{-- 2 : Analytics --}}
+                        {{-- 2. Analytics --}}
                         <a href="{{ route('admin.reports') ?? '#' }}" class="flex items-center px-5 py-4 rounded-2xl {{ request()->routeIs('admin.reports') ? 'bg-[#D32F2F] text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
                             <i class="fa-solid fa-chart-line w-6 text-center"></i>
                             <span class="ml-4 font-bold text-sm">Analytics & Reports</span>
@@ -61,7 +64,7 @@
                             <span class="ml-4 font-bold text-sm">Verify Invoices</span>
                         </a>
 
-                        {{-- 5. NEW: KYC Verifications --}}
+                        {{-- 5. KYC Verifications --}}
                         <a href="{{ route('admin.kyc') ?? '#' }}" class="flex items-center px-5 py-4 rounded-2xl {{ request()->routeIs('admin.kyc') ? 'bg-[#D32F2F] text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
                             <i class="fa-solid fa-id-card w-6 text-center"></i>
                             <span class="ml-4 font-bold text-sm">KYC Verifications</span>
@@ -75,18 +78,24 @@
                         </a>
 
                         <p class="px-5 text-[10px] font-black text-gray-600 uppercase mt-10 mb-4 tracking-[0.2em]">Configuration</p>
-                        
-                        {{-- 7. Localization --}}
+
+                        {{-- 7. Account Settings --}}
+                        <a href="{{ route('admin.profile') ?? '#' }}" class="flex items-center px-5 py-4 rounded-2xl {{ request()->routeIs('admin.profile') ? 'bg-[#D32F2F] text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                            <i class="fa-solid fa-user-shield w-6 text-center"></i>
+                            <span class="ml-4 font-bold text-sm">Account Settings</span>
+                        </a>
+                        {{-- 8. Localization --}}
                         <a href="{{ route('admin.settings.localization') ?? '#' }}" class="flex items-center px-5 py-4 rounded-2xl {{ request()->routeIs('admin.settings.localization') ? 'bg-[#D32F2F] text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
                             <i class="fa-solid fa-earth-asia w-6 text-center"></i>
                             <span class="ml-4 font-bold text-sm">Localization</span>
                         </a>
 
-                        {{-- 8. Setting --}}
+                        {{-- 9. Platform Settings --}}
                         <a href="{{ route('admin.settings') ?? '#' }}" class="flex items-center px-5 py-4 rounded-2xl {{ request()->routeIs('admin.settings') ? 'bg-[#D32F2F] text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
                             <i class="fa-solid fa-gear w-6 text-center"></i>
-                            <span class="ml-4 font-bold text-sm">Settings</span>
+                            <span class="ml-4 font-bold text-sm">Platform Settings</span>
                         </a>
+
                     </div>
 
                     <form action="{{ route('logout') }}" method="POST" class="mt-10 pt-6 border-t border-white/5">
@@ -105,11 +114,10 @@
         <div class="flex-1 flex flex-col overflow-hidden relative">
             
             {{-- HEADER: Protected Profile Info --}}
-            {{-- HEADER: Protected Profile Info --}}
             @auth
             <header class="flex items-center justify-between px-10 py-6 bg-white/70 backdrop-blur-xl border-b border-gray-100 z-10">
                 
-                {{-- REPLACED SEARCH BAR: Greeting & Status --}}
+                {{-- Greeting & Status --}}
                 <div class="flex-1 flex flex-col justify-center">
                     <h2 class="text-2xl font-black text-gray-800 tracking-tight leading-none">
                         Welcome Back, {{ explode(' ', auth()->user()->name)[0] }}!
@@ -125,6 +133,7 @@
                     </div>
                 </div>
 
+                {{-- Profile Section --}}
                 <div class="flex items-center gap-6 ml-10">
                     <div class="text-right hidden xl:block">
                         <p class="text-sm font-black text-[#1A1C1E] leading-tight">{{ auth()->user()->name }}</p>
@@ -137,16 +146,17 @@
                         </div>
                     </div>
                     
-                    <div class="relative group cursor-pointer">
+                    {{-- NEW: Made the Avatar a clickable link to Account Settings --}}
+                    <a href="{{ route('admin.profile') ?? '#' }}" class="relative group cursor-pointer block" title="Go to Account Settings">
                         <div class="absolute -inset-1 bg-gradient-to-tr from-[#D32F2F] to-[#FF5252] rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-300"></div>
-                        <div class="relative w-14 h-14 rounded-2xl bg-white border border-gray-100 flex items-center justify-center text-[#D32F2F] shadow-sm active:scale-95 transition-transform overflow-hidden">
+                        <div class="relative w-14 h-14 rounded-2xl bg-white border border-gray-100 flex items-center justify-center text-[#D32F2F] shadow-sm active:scale-95 transition-transform overflow-hidden hover:border-red-200">
                             @if(auth()->user()->avatar)
                                 <img src="{{ asset('storage/' . auth()->user()->avatar) }}" class="w-full h-full object-cover">
                             @else
-                                <i class="fa-solid fa-user-shield text-xl"></i>
+                                <i class="fa-solid fa-user-shield text-xl group-hover:scale-110 transition-transform"></i>
                             @endif
                         </div>
-                    </div>
+                    </a>
                 </div>
             </header>
             @endauth

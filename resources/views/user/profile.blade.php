@@ -71,12 +71,21 @@
                     <input type="text" name="name" value="{{ old('name', $user->name) }}" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all font-medium text-gray-800">
                 </div>
 
+                {{-- NEW: Email Address --}}
+                <div>
+                    <label class="block text-sm font-bold text-gray-900 mb-2">Email Address</label>
+                    <input type="email" name="email" value="{{ old('email', $user->email) }}" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all font-medium text-gray-800">
+                </div>
+
                 {{-- Phone --}}
                 <div>
                     <label class="block text-sm font-bold text-gray-900 mb-2">Phone Number</label>
                     <input type="text" name="phone" value="{{ old('phone', $user->phone) }}" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all font-medium text-gray-800">
                     <p class="text-[11px] text-gray-500 mt-2 font-medium"><i class="fa-solid fa-lock text-gray-400 mr-1"></i> This number is shown to donors when you request blood.</p>
                 </div>
+
+                {{-- Spacer to push passwords to next row cleanly --}}
+                <div class="hidden md:block"></div>
 
                 {{-- Password Section Divider --}}
                 <div class="md:col-span-2 mt-4 pt-8 border-t border-gray-100">
