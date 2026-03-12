@@ -1,12 +1,12 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="max-w-5xl mx-auto">
+<div class="space-y-6 animate-fade-in px-8 py-8">
     
     {{-- Header & Save Button Actions --}}
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
         <div>
-            <h2 class="text-3xl font-black text-slate-800 tracking-tight">Localization</h2>
+            <h2 class="text-2xl font-black text-gray-900 tracking-tight">Localization</h2>
             <p class="text-sm text-slate-500 mt-1.5 font-medium">Manage platform languages, timezones, and regional formats.</p>
         </div>
         

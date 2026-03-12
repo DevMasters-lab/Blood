@@ -94,5 +94,5 @@ class DatabaseSeeder extends Seeder
     //         'review_note' => 'Image was blurry, please resubmit.',
     //     ]);
     // }
-}
+    }
 }

@@ -1,7 +1,8 @@
 @extends('layouts.user') {{-- Use your main frontend layout --}}
 
 @section('content')
-<div class="max-w-2xl mx-auto py-12 px-4">
+<!-- <div class="max-w-2xl mx-auto py-12 px-4"> -->
+<div class="space-y-6 animate-fade-in px-8 py-8">
     <div class="mb-6">
         <a href="javascript:history.back()" class="inline-flex items-center text-red-600 hover:text-red-700 font-semibold transition-colors">
             <i class="fa-solid fa-arrow-left mr-2"></i> Back
@@ -19,6 +20,7 @@
         <form action="{{ route('user.donate.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
 
+            
             <div>
                 <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Blood Bank / Hospital Name</label>
                 <input type="text" name="blood_bank_name" required class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none transition-all font-bold text-gray-800 placeholder:font-medium" placeholder="Ex: Calmette Hospital">

@@ -34,61 +34,58 @@
 
                 <nav class="flex flex-col justify-between flex-1">
                     <div class="space-y-2">
+                        {{-- 1. Dashboard --}}
                         <a href="{{ route('admin.dashboard') }}" 
                            class="flex items-center px-5 py-4 rounded-2xl transition-all duration-300 {{ request()->routeIs('admin.dashboard') ? 'bg-[#D32F2F] text-white shadow-xl shadow-red-900/20 translate-x-2' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
                             <i class="fa-solid fa-chart-pie w-6 text-center"></i>
                             <span class="ml-4 font-bold text-sm">Dashboard</span>
                         </a>
 
+                        {{-- 2 : Analytics --}}
+                        <a href="{{ route('admin.reports') ?? '#' }}" class="flex items-center px-5 py-4 rounded-2xl {{ request()->routeIs('admin.reports') ? 'bg-[#D32F2F] text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                            <i class="fa-solid fa-chart-line w-6 text-center"></i>
+                            <span class="ml-4 font-bold text-sm">Analytics & Reports</span>
+                        </a>
+
                         <p class="px-5 text-[10px] font-black text-gray-600 uppercase mt-10 mb-4 tracking-[0.2em]">Management</p>
                         
-                        {{-- 1. Blood Requests --}}
+                        {{-- 3. Blood Requests --}}
                         <a href="{{ route('admin.requests') }}" class="flex items-center px-5 py-4 rounded-2xl {{ request()->routeIs('admin.requests') ? 'bg-[#D32F2F] text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
                             <i class="fa-solid fa-hand-holding-medical w-6 text-center"></i>
                             <span class="ml-4 font-bold text-sm">Blood Requests</span>
                         </a>
 
-                        {{-- 2. NEW: Donor Proofs --}}
-                        <a href="{{ route('admin.responses') ?? '#' }}" class="flex items-center px-5 py-4 rounded-2xl {{ request()->routeIs('admin.responses') ? 'bg-[#D32F2F] text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
-                            <i class="fa-solid fa-file-medical w-6 text-center"></i>
-                            <span class="ml-4 font-bold text-sm">Donor Proofs</span>
-                        </a>
-
-                        {{-- 3. Verify Invoices --}}
+                        {{-- 4. Verify Invoices --}}
                         <a href="{{ route('admin.donations') }}" class="flex items-center px-5 py-4 rounded-2xl {{ request()->routeIs('admin.donations') ? 'bg-[#D32F2F] text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
                             <i class="fa-solid fa-file-invoice w-6 text-center"></i>
                             <span class="ml-4 font-bold text-sm">Verify Invoices</span>
                         </a>
 
-                        {{-- 4. NEW: KYC Verifications --}}
+                        {{-- 5. NEW: KYC Verifications --}}
                         <a href="{{ route('admin.kyc') ?? '#' }}" class="flex items-center px-5 py-4 rounded-2xl {{ request()->routeIs('admin.kyc') ? 'bg-[#D32F2F] text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
                             <i class="fa-solid fa-id-card w-6 text-center"></i>
                             <span class="ml-4 font-bold text-sm">KYC Verifications</span>
                             <span class="ml-auto bg-[#D32F2F] text-white text-[9px] font-black px-2 py-0.5 rounded-md shadow-sm animate-pulse {{ request()->routeIs('admin.kyc') ? 'bg-white text-[#D32F2F]' : '' }}">NEW</span>
                         </a>
 
-                        {{-- 5. User Directory --}}
+                        {{-- 6. User Directory --}}
                         <a href="{{ route('admin.users') }}" class="flex items-center px-5 py-4 rounded-2xl {{ request()->routeIs('admin.users') ? 'bg-[#D32F2F] text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
                             <i class="fa-solid fa-users-gear w-6 text-center"></i>
                             <span class="ml-4 font-bold text-sm">User Directory</span>
                         </a>
 
-                        {{-- 6. NEW: Analytics --}}
-                        <a href="{{ route('admin.reports') ?? '#' }}" class="flex items-center px-5 py-4 rounded-2xl {{ request()->routeIs('admin.reports') ? 'bg-[#D32F2F] text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
-                            <i class="fa-solid fa-chart-line w-6 text-center"></i>
-                            <span class="ml-4 font-bold text-sm">Analytics & Reports</span>
-                        </a>
-
                         <p class="px-5 text-[10px] font-black text-gray-600 uppercase mt-10 mb-4 tracking-[0.2em]">Configuration</p>
                         
-                        <a href="{{ route('admin.settings') ?? '#' }}" class="flex items-center px-5 py-4 rounded-2xl {{ request()->routeIs('admin.settings') ? 'bg-[#D32F2F] text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
-                            <i class="fa-solid fa-gear w-6 text-center"></i>
-                            <span class="ml-4 font-bold text-sm">Settings</span>
-                        </a>
-                        
+                        {{-- 7. Localization --}}
                         <a href="{{ route('admin.settings.localization') ?? '#' }}" class="flex items-center px-5 py-4 rounded-2xl {{ request()->routeIs('admin.settings.localization') ? 'bg-[#D32F2F] text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
                             <i class="fa-solid fa-earth-asia w-6 text-center"></i>
                             <span class="ml-4 font-bold text-sm">Localization</span>
+                        </a>
+
+                        {{-- 8. Setting --}}
+                        <a href="{{ route('admin.settings') ?? '#' }}" class="flex items-center px-5 py-4 rounded-2xl {{ request()->routeIs('admin.settings') ? 'bg-[#D32F2F] text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                            <i class="fa-solid fa-gear w-6 text-center"></i>
+                            <span class="ml-4 font-bold text-sm">Settings</span>
                         </a>
                     </div>
 
@@ -96,7 +93,7 @@
                         @csrf
                         <button type="submit" class="w-full flex items-center px-5 py-4 text-xs font-black text-gray-500 hover:text-[#D32F2F] transition-colors uppercase tracking-widest">
                             <i class="fa-solid fa-power-off w-6 text-center"></i>
-                            <span class="ml-4 font-bold">Shutdown Session</span>
+                            <span class="ml-4 font-bold">Logout</span>
                         </button>
                     </form>
                 </nav>

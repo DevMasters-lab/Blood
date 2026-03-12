@@ -124,10 +124,32 @@ class AdminController extends Controller
     // =========================================================================
     // 4. OLD DONATIONS MANAGEMENT (If keeping legacy module)
     // =========================================================================
-    public function donations()
+    public function donations(Request $request)
     {
-        $donations = DonationInvoice::with('user')->latest()->paginate(10);
-        return view('admin.donations', compact('donations'));
+        $allCount = \App\Models\DonationInvoice::count();
+        $pendingCount = \App\Models\DonationInvoice::where('status', 'pending')->count();
+        $approvedCount = \App\Models\DonationInvoice::where('status', 'active')->count();
+        $rejectedCount = \App\Models\DonationInvoice::where('status', 'rejected')->count();
+
+        $currentStatus = $request->get('status', 'all');
+        
+        $query = \App\Models\DonationInvoice::with(['user', 'proofFile']);
+
+        if ($currentStatus !== 'all') {
+            $dbStatus = ($currentStatus === 'approved') ? 'active' : $currentStatus;
+            $query->where('status', $dbStatus);
+        }
+
+        $donations = $query->latest()->paginate(10);
+
+        return view('admin.donations', compact(
+            'donations',
+            'allCount',
+            'pendingCount',
+            'approvedCount',
+            'rejectedCount',
+            'currentStatus'
+        ));
     }
 
     public function updateDonationStatus(Request $request, $id)
@@ -137,60 +159,26 @@ class AdminController extends Controller
         if ($request->status == 'active') {
             $donation->status = 'active';
             
+            // Generate Modern Unique Invoice Code (e.g., INV-8A9B2C)
             if (!$donation->invoice_code) {
-                $donation->invoice_code = 'INV-' . date('Ym') . '-' . str_pad($donation->id, 4, '0', STR_PAD_LEFT);
+                $donation->invoice_code = 'INV-' . strtoupper(Str::random(6));
             }
             
-        } 
-        elseif ($request->status == 'rejected') {
+            // Increment the user's trust stats so their public profile updates
+            $donation->user->increment('donation_invoice_count');
+            
+            $message = 'Donation Approved! Code ' . $donation->invoice_code . ' generated.';
+            
+        } elseif ($request->status == 'rejected') {
             $donation->status = 'rejected';
+            $message = 'Donation record rejected.';
         }
 
         $donation->save();
-        return back()->with('success', 'Status updated silently in the Master Database.');
-    }
-
-    // =========================================================================
-    // 5. NEW INVOICE VERIFICATION MODULE
-    // =========================================================================
-    public function verifyInvoices()
-    {
-        $pendingInvoices = DonationInvoice::with(['user', 'proofFile'])
-            ->where('status', 'pending')
-            ->latest()
-            ->get();
-            
-        $activeInvoicesCount = DonationInvoice::where('status', 'active')->count();
-
-        return view('admin.verify_invoices', compact('pendingInvoices', 'activeInvoicesCount'));
-    }
-
-    public function approveInvoice($id)
-    {
-        $invoice = DonationInvoice::findOrFail($id);
         
-        // Generate Unique Invoice Code (e.g., INV-8A9B2C)
-        $invoiceCode = 'INV-' . strtoupper(Str::random(6));
-
-        $invoice->update([
-            'status' => 'active',
-            'invoice_code' => $invoiceCode
-        ]);
-
-        // Increment user's verified stats
-        $invoice->user->increment('donation_invoice_count');
-
-        return back()->with('success', 'Invoice Approved! Code ' . $invoiceCode . ' generated.');
+        // Redirect back to the SAME filter tab they were on
+        return back()->with('success', $message);
     }
-
-    public function rejectInvoice($id)
-    {
-        $invoice = DonationInvoice::findOrFail($id);
-        $invoice->update(['status' => 'rejected']);
-
-        return back()->with('error', 'Donation submission rejected.');
-    }
-
 
     // =========================================================================
     // 6. PLATFORM CONFIGURATION & SETTINGS
@@ -282,13 +270,52 @@ class AdminController extends Controller
         return back()->with('error', $userName . ' was rejected and deleted. They must register again with valid documents.');
     }
 
-    public function responses()
-    {
-        return view('admin.responses');
-    }
-
     public function reports()
     {
-        return view('admin.reports');
+        // 1. Get Total Counts
+        $totalRequests = \App\Models\BloodRequest::count();
+        $completedRequests = \App\Models\BloodRequest::where('status', 'completed')->count();
+        $expiredRequests = \App\Models\BloodRequest::where('status', 'expired')->count();
+        $cancelledRequests = \App\Models\BloodRequest::where('status', 'cancelled')->count();
+        $reservedRequests = \App\Models\BloodRequest::where('status', 'reserved')->count();
+        $openRequests = \App\Models\BloodRequest::where('status', 'open')->count();
+
+        // 2. Count Verified Donations (Approved Invoices + Verified Responses)
+        $verifiedInvoices = \App\Models\DonationInvoice::whereIn('status', ['active', 'used', 'expired'])->count();
+        $verifiedResponses = \App\Models\RequestResponse::where('proof_status', 'verified')->count();
+        $verifiedDonations = $verifiedInvoices + $verifiedResponses;
+
+        // 3. Calculate Percentages (Preventing division by zero)
+        $completedPct = $totalRequests > 0 ? round(($completedRequests / $totalRequests) * 100) : 0;
+        $reservedPct = $totalRequests > 0 ? round(($reservedRequests / $totalRequests) * 100) : 0;
+        $openPct = $totalRequests > 0 ? round(($openRequests / $totalRequests) * 100) : 0;
+        $expiredCancelledPct = $totalRequests > 0 ? round((($expiredRequests + $cancelledRequests) / $totalRequests) * 100) : 0;
+
+        // 4. Get Most Popular Blood Types (Top 4)
+        $popularBloodTypes = \App\Models\BloodRequest::select('blood_type', \Illuminate\Support\Facades\DB::raw('count(*) as count'))
+            ->groupBy('blood_type')
+            ->orderByDesc('count')
+            ->take(4)
+            ->get()
+            ->map(function ($item) use ($totalRequests) {
+                $item->percentage = $totalRequests > 0 ? round(($item->count / $totalRequests) * 100) : 0;
+                
+                // Assign a descriptive label based on the percentage
+                if ($item->percentage > 30) {
+                    $item->label = 'Highest Demand';
+                } elseif ($item->percentage > 15) {
+                    $item->label = 'High Demand';
+                } elseif ($item->percentage > 5) {
+                    $item->label = 'Medium Demand';
+                } else {
+                    $item->label = 'Rare Need';
+                }
+                return $item;
+            });
+
+        return view('admin.reports', compact(
+            'totalRequests', 'completedRequests', 'expiredRequests', 'verifiedDonations',
+            'completedPct', 'reservedPct', 'openPct', 'expiredCancelledPct', 'popularBloodTypes'
+        ));
     }
 }

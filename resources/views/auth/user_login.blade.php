@@ -40,14 +40,14 @@
         <form action="{{ route('user.login') }}" method="POST">
             @csrf
             
-            {{-- Phone Input --}}
+            {{-- Phone or Email Input --}}
             <div class="mb-6">
-                <label class="block text-sm font-bold text-gray-700 mb-2">Phone Number</label>
+                <label class="block text-sm font-bold text-gray-700 mb-2">Phone Number or Email</label>
                 <div class="relative group">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-phone text-gray-400 group-focus-within:text-red-500 transition-colors"></i>
+                        <i class="fa-solid fa-user text-gray-400 group-focus-within:text-red-500 transition-colors"></i>
                     </div>
-                    <input type="text" name="phone" placeholder="Enter your phone number" class="w-full bg-white/50 border border-gray-200 rounded-xl pl-11 pr-4 py-3.5 outline-none focus:ring-4 focus:ring-red-500/10 focus:border-red-500 focus:bg-white transition-all font-bold text-gray-900 placeholder-gray-400" required>
+                    <input type="text" name="identifier" placeholder="Enter your phone number or email" class="w-full bg-white/50 border border-gray-200 rounded-xl pl-11 pr-4 py-3.5 outline-none focus:ring-4 focus:ring-red-500/10 focus:border-red-500 focus:bg-white transition-all font-bold text-gray-900 placeholder-gray-400" required>
                 </div>
             </div>
             

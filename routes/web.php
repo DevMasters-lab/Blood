@@ -135,7 +135,5 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::get('/kyc', [AdminController::class, 'kyc'])->name('admin.kyc');
     Route::post('/kyc/{id}/approve', [AdminController::class, 'approveKyc'])->name('admin.kyc.approve');
     Route::post('/kyc/{id}/reject', [AdminController::class, 'rejectKyc'])->name('admin.kyc.reject');
-    Route::get('/responses', [AdminController::class, 'responses'])->name('admin.responses');
     Route::get('/reports', [AdminController::class, 'reports'])->name('admin.reports');
 });
-

@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="max-w-6xl mx-auto">
+<div class="space-y-6 animate-fade-in px-8 py-8">
     
     {{-- Form wrapping the entire page so the top button works --}}
     <form action="{{ route('admin.settings.update') }}" method="POST">
@@ -10,7 +10,7 @@
         {{-- Header Section --}}
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-                <h2 class="text-3xl font-black text-gray-900 tracking-tight">Frontend Settings</h2>
+                <h2 class="text-2xl font-black text-gray-900 tracking-tight">Frontend Settings</h2>
                 <p class="text-sm text-gray-500 mt-1 font-medium">Manage homepage content, contact information, and platform variables.</p>
             </div>
             

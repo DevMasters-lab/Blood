@@ -22,44 +22,46 @@
         <form action="{{ route('register') }}" method="POST" enctype="multipart/form-data">
             @csrf
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {{-- Name --}}
-                <div class="mb-2">
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Full Name</label>
-                    <input type="text" name="name" value="{{ old('name') }}" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-red-500 outline-none @error('name') border-red-500 @enderror" placeholder="Enter name" required>
-                </div>
-
-                {{-- Phone --}}
-                <div class="mb-2">
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Phone Number</label>
-                    <input type="text" 
-                        name="phone" 
-                        value="{{ old('phone') }}" 
-                        inputmode="numeric"
-                        class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-red-500 outline-none @error('phone') border-red-500 @enderror" 
-                        placeholder="e.g. 012345678" 
-                        required>
-                    <p class="text-[10px] text-gray-400 mt-1 ml-1 font-medium italic">Must start with 0</p>
-                </div>
+            {{-- Name --}}
+            <div class="mb-4">
+                <label class="block text-sm font-bold text-gray-700 mb-1">Full Name</label>
+                <input type="text" name="name" value="{{ old('name') }}" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-red-500 outline-none @error('name') border-red-500 @enderror" placeholder="Enter name" required>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                {{-- Blood Type Selection --}}
-                <div class="mb-4">
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Blood Type</label>
-                    <select name="blood_type" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-red-500 outline-none bg-white @error('blood_type') border-red-500 @enderror" required>
-                        <option value="" disabled selected>Select group</option>
-                        @foreach(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as $type)
-                            <option value="{{ $type }}" {{ old('blood_type') == $type ? 'selected' : '' }}>{{ $type }}</option>
-                        @endforeach
-                    </select>
-                </div>
+            {{-- Email / Gmail --}}
+            <div class="mb-4">
+                <label class="block text-sm font-bold text-gray-700 mb-1">Email</label>
+                <input type="email" name="email" value="{{ old('email') }}" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-red-500 outline-none @error('email') border-red-500 @enderror" placeholder="Enter email" required>
+            </div>
 
-                {{-- ID / Passport Number --}}
-                <div class="mb-4">
-                    <label class="block text-sm font-bold text-gray-700 mb-1">ID / Passport No.</label>
-                    <input type="text" name="id_number" value="{{ old('id_number') }}" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-red-500 outline-none @error('id_number') border-red-500 @enderror" placeholder="Enter ID number" required>
-                </div>
+            {{-- Phone --}}
+            <div class="mb-4">
+                <label class="block text-sm font-bold text-gray-700 mb-1">Phone Number</label>
+                <input type="text" 
+                    name="phone" 
+                    value="{{ old('phone') }}" 
+                    inputmode="numeric"
+                    class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-red-500 outline-none @error('phone') border-red-500 @enderror" 
+                    placeholder="e.g. 012345678" 
+                    required>
+                <p class="text-[10px] text-gray-400 mt-1 ml-1 font-medium italic">Must start with 0</p>
+            </div>
+
+            {{-- Blood Type Selection --}}
+            <div class="mb-4">
+                <label class="block text-sm font-bold text-gray-700 mb-1">Blood Type</label>
+                <select name="blood_type" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-red-500 outline-none bg-white @error('blood_type') border-red-500 @enderror" required>
+                    <option value="" disabled selected>Select group</option>
+                    @foreach(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as $type)
+                        <option value="{{ $type }}" {{ old('blood_type') == $type ? 'selected' : '' }}>{{ $type }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            {{-- ID / Passport Number --}}
+            <div class="mb-6">
+                <label class="block text-sm font-bold text-gray-700 mb-1">ID / Passport No.</label>
+                <input type="text" name="id_number" value="{{ old('id_number') }}" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-red-500 outline-none @error('id_number') border-red-500 @enderror" placeholder="Enter ID number" required>
             </div>
 
             {{-- Upload ID / Passport Photo --}}
@@ -69,18 +71,16 @@
                 <p class="text-[11px] text-gray-500 mt-2 font-medium italic">Image must be clear and readable for verification.</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {{-- Password --}}
-                <div class="mb-4">
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Password</label>
-                    <input type="password" name="password" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-red-500 outline-none @error('password') border-red-500 @enderror" placeholder="Min. 6 characters" required>
-                </div>
+            {{-- Password --}}
+            <div class="mb-4">
+                <label class="block text-sm font-bold text-gray-700 mb-1">Password</label>
+                <input type="password" name="password" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-red-500 outline-none @error('password') border-red-500 @enderror" placeholder="Min. 6 characters" required>
+            </div>
 
-                {{-- Confirm Password --}}
-                <div class="mb-8">
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Confirm Password</label>
-                    <input type="password" name="password_confirmation" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-red-500 outline-none" placeholder="Repeat password" required>
-                </div>
+            {{-- Confirm Password --}}
+            <div class="mb-8">
+                <label class="block text-sm font-bold text-gray-700 mb-1">Confirm Password</label>
+                <input type="password" name="password_confirmation" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-red-500 outline-none" placeholder="Repeat password" required>
             </div>
 
             <button type="submit" class="w-full bg-red-600 text-white p-3.5 rounded-xl font-bold hover:bg-red-700 transition shadow-lg shadow-red-100">

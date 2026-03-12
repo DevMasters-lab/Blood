@@ -25,44 +25,49 @@ class UserWebController extends Controller
 
     // --- Auth Logic ---
     public function login(Request $request) {
-        $credentials = $request->validate([
-            'phone' => 'required',
+        $request->validate([
+            'identifier' => 'required',  // Can be phone or email
             'password' => 'required',
         ]);
 
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
+        $identifier = $request->input('identifier');
+        
+        // Try to find user by phone or email
+        $user = User::where('phone', $identifier)
+                     ->orWhere('email', $identifier)
+                     ->first();
 
+        if ($user && Hash::check($request->password, $user->password)) {
+            
             // 1. Prevent Admins from entering the standard User Portal
             if ($user->usertype === 'admin') {
-                Auth::logout();
-                return back()->withErrors(['phone' => 'Administrators must login via the Admin Portal.']);
+                return back()->withErrors(['identifier' => 'Administrators must login via the Admin Portal.']);
             }
 
             // 2. Block Pending Users
             if ($user->kyc_status === 'pending') {
-                Auth::logout();
-                return back()->withErrors(['phone' => 'Your account is under review by an Admin. You cannot log in yet.']);
+                return back()->withErrors(['identifier' => 'Your account is under review by an Admin. You cannot log in yet.']);
             }
 
             // 3. Block Rejected Users
             if ($user->kyc_status === 'rejected') {
-                Auth::logout();
-                return back()->withErrors(['phone' => 'Your ID verification was rejected. Please register a new account.']);
+                return back()->withErrors(['identifier' => 'Your ID verification was rejected. Please register a new account.']);
             }
             
             // If they are Verified, let them in!
+            Auth::loginUsingId($user->id);
             $request->session()->regenerate();
             return redirect()->route('user.dashboard');
         }
 
-        return back()->withErrors(['phone' => 'Invalid credentials.']);
+        return back()->withErrors(['identifier' => 'Invalid phone/email or password.']);
     }
 
     public function register(Request $request) {
         // 1. Validate all fields
         $request->validate([
             'name' => 'required|string|max:150',
+            'email' => 'nullable|email|max:255|unique:users',
             'phone' => 'required|string|unique:users|regex:/^0[0-9]{8,9}$/',
             'blood_type' => 'required|string', 
             'id_number' => 'required|string|max:50',
@@ -72,11 +77,13 @@ class UserWebController extends Controller
             'phone.regex' => 'Please enter a phone number that starts with 0 and contains only numbers.',
             'password.confirmed' => 'Password confirmation does not match. Please re-enter your password.',
             'id_photo.required' => 'You must upload an official ID or Passport photo to register.',
+            'email.unique' => 'This email address is already registered.',
         ]);
 
         // 2. Create the User with Pending KYC Status
         $user = User::create([
             'name' => $request->name,
+            'email' => $request->email,
             'phone' => $request->phone,
             'blood_type' => $request->blood_type, 
             'id_number' => $request->id_number,
