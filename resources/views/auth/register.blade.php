@@ -28,11 +28,6 @@
                 <input type="text" name="name" value="{{ old('name') }}" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-red-500 outline-none @error('name') border-red-500 @enderror" placeholder="Enter name" required>
             </div>
 
-            {{-- Email / Gmail --}}
-            <div class="mb-4">
-                <label class="block text-sm font-bold text-gray-700 mb-1">Email</label>
-                <input type="email" name="email" value="{{ old('email') }}" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-red-500 outline-none @error('email') border-red-500 @enderror" placeholder="Enter email" required>
-            </div>
 
             {{-- Phone --}}
             <div class="mb-4">
@@ -45,17 +40,6 @@
                     placeholder="e.g. 012345678" 
                     required>
                 <p class="text-[10px] text-gray-400 mt-1 ml-1 font-medium italic">Must start with 0</p>
-            </div>
-
-            {{-- Blood Type Selection --}}
-            <div class="mb-4">
-                <label class="block text-sm font-bold text-gray-700 mb-1">Blood Type</label>
-                <select name="blood_type" class="w-full border-gray-200 border p-2.5 rounded-xl focus:ring-2 focus:ring-red-500 outline-none bg-white @error('blood_type') border-red-500 @enderror" required>
-                    <option value="" disabled selected>Select group</option>
-                    @foreach(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as $type)
-                        <option value="{{ $type }}" {{ old('blood_type') == $type ? 'selected' : '' }}>{{ $type }}</option>
-                    @endforeach
-                </select>
             </div>
 
             {{-- ID / Passport Number --}}

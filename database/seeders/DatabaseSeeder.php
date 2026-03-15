@@ -14,26 +14,26 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // =================================================================
-        // 1. CREATE SUPER ADMIN (Login: 099999999 / password)
+        // 1. CREATE SUPER ADMIN (Login: 015916217 / 123456)
         // =================================================================
         User::create([
             'name' => 'Super Admin',
-            'phone' => '099999999', 
+            'phone' => '015916217', 
             'email' => 'admin@bloodshare.kh',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('123456'),
             'usertype' => 'admin',
             'status' => 'active',
             'kyc_status' => 'verified',
         ]);
 
         // =================================================================
-        // 2. CREATE TEST USER (Login: 0123456789 / password123)
+        // 2. CREATE TEST USER (Login: 0123456789 / 123456)
         // =================================================================
         $user = User::create([
             'name' => 'Sokha Developer',
             'phone' => '0123456789',
             'email' => 'sokha@bloodshare.kh',
-            'password' => Hash::make('password123'),
+            'password' => Hash::make('123456'),
             'usertype' => 'user', // <--- Normal User Role
             'status' => 'active',
             'id_number' => 'KH-123456789',

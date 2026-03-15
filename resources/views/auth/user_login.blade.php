@@ -20,8 +20,8 @@
         
         {{-- Header Icon & Title --}}
         <div class="text-center mb-10">
-            <h2 class="text-3xl font-black text-gray-900 tracking-tight">User Login</h2>
-            <p class="text-gray-500 mt-2 font-medium text-sm">Log in to request blood or pledge a donation.</p>
+            <h2 class="text-3xl font-black text-gray-900 tracking-tight">{{ __('ui.user_login') }}</h2>
+            <p class="text-gray-500 mt-2 font-medium text-sm">{{ __('ui.login_request_or_pledge') }}</p>
         </div>
 
         {{-- Error Messages --}}
@@ -42,18 +42,18 @@
             
             {{-- Phone or Email Input --}}
             <div class="mb-6">
-                <label class="block text-sm font-bold text-gray-700 mb-2">Phone Number or Email</label>
+                <label class="block text-sm font-bold text-gray-700 mb-2">{{ __('ui.phone_or_email') }}</label>
                 <div class="relative group">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <i class="fa-solid fa-user text-gray-400 group-focus-within:text-red-500 transition-colors"></i>
                     </div>
-                    <input type="text" name="identifier" placeholder="Enter your phone number or email" class="w-full bg-white/50 border border-gray-200 rounded-xl pl-11 pr-4 py-3.5 outline-none focus:ring-4 focus:ring-red-500/10 focus:border-red-500 focus:bg-white transition-all font-bold text-gray-900 placeholder-gray-400" required>
+                    <input type="text" name="identifier" placeholder="{{ __('ui.enter_phone_or_email') }}" class="w-full bg-white/50 border border-gray-200 rounded-xl pl-11 pr-4 py-3.5 outline-none focus:ring-4 focus:ring-red-500/10 focus:border-red-500 focus:bg-white transition-all font-bold text-gray-900 placeholder-gray-400" required>
                 </div>
             </div>
             
             {{-- Password Input --}}
             <div class="mb-8">
-                <label class="block text-sm font-bold text-gray-700 mb-2">Password</label>
+                <label class="block text-sm font-bold text-gray-700 mb-2">{{ __('ui.password') }}</label>
                 <div class="relative group">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <i class="fa-solid fa-lock text-gray-400 group-focus-within:text-red-500 transition-colors"></i>
@@ -61,13 +61,13 @@
                     <input type="password" name="password" placeholder="••••••••" class="w-full bg-white/50 border border-gray-200 rounded-xl pl-11 pr-4 py-3.5 outline-none focus:ring-4 focus:ring-red-500/10 focus:border-red-500 focus:bg-white transition-all font-bold text-gray-900 placeholder-gray-400" required>
                 </div>
                 <div class="flex justify-end mt-2">
-                    <a href="#" class="text-xs font-bold text-gray-500 hover:text-red-600 transition-colors">Forgot password?</a>
+                    <a href="#" class="text-xs font-bold text-gray-500 hover:text-red-600 transition-colors">{{ __('ui.forgot_password') }}</a>
                 </div>
             </div>
 
             {{-- Submit Button --}}
             <button type="submit" class="w-full bg-gradient-to-r from-red-600 to-red-500 text-white font-black py-4 px-8 rounded-xl shadow-lg shadow-red-500/30 hover:shadow-red-500/40 transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2 group border border-red-500">
-                <span>Secure Login</span>
+                <span>{{ __('ui.secure_login') }}</span>
                 <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
             </button>
         </form>
@@ -75,8 +75,8 @@
         {{-- Register Link --}}
         <div class="mt-8 text-center border-t border-gray-100 pt-6">
             <p class="text-gray-500 font-medium text-sm">
-                New to the platform? 
-                <a href="{{ route('register') }}" class="text-red-600 font-bold hover:text-red-700 transition-colors ml-1 hover:underline decoration-2 underline-offset-4">Register as a Donor</a>
+                {{ __('ui.no_account_yet') }}
+                <a href="{{ route('register') }}" class="text-red-600 font-bold hover:text-red-700 transition-colors ml-1 hover:underline decoration-2 underline-offset-4">{{ __('ui.register_now') }}</a>
             </p>
         </div>
     </div>

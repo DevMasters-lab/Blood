@@ -4,18 +4,18 @@
 <div class="space-y-6 animate-fade-in px-8 py-8">
     
     {{-- Form wrapping the entire page so the top button works --}}
-    <form action="{{ route('admin.settings.update') }}" method="POST">
+    <form action="{{ route('admin.settings.update') }}" method="POST" enctype="multipart/form-data">
         @csrf
 
         {{-- Header Section --}}
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-                <h2 class="text-2xl font-black text-gray-900 tracking-tight">Frontend Settings</h2>
-                <p class="text-sm text-gray-500 mt-1 font-medium">Manage homepage content, contact information, and platform variables.</p>
+                <h2 class="text-2xl font-black text-gray-900 tracking-tight">{{ __('ui.frontend_settings') }}</h2>
+                <p class="text-sm text-gray-500 mt-1 font-medium">{{ __('ui.frontend_settings_desc') }}</p>
             </div>
             
             <button type="submit" class="bg-[#D32F2F] text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-red-900/20 hover:bg-red-700 transition-all flex items-center gap-2 active:scale-95">
-                <i class="fa-solid fa-cloud-arrow-up"></i> Save Settings
+                <i class="fa-solid fa-cloud-arrow-up"></i> {{ __('ui.save_settings') }}
             </button>
         </div>
 
@@ -33,17 +33,55 @@
                 {{-- Homepage Hero Banner --}}
                 <div class="bg-white rounded-[2rem] p-8 border border-gray-100 shadow-sm">
                     <h3 class="text-lg font-black text-gray-900 mb-6 flex items-center gap-3">
-                        <i class="fa-solid fa-image text-[#D32F2F]"></i> Homepage Hero Banner
+                        <i class="fa-solid fa-image text-[#D32F2F]"></i> {{ __('ui.homepage_hero_banner') }}
                     </h3>
                     
                     <div class="space-y-6">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-2">Main Headline</label>
-                            <input type="text" name="main_headline" value="{{ $settings['main_headline'] ?? 'Donate Blood, Save a Life Today' }}" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 outline-none focus:bg-white focus:border-[#D32F2F] focus:ring-4 focus:ring-[#D32F2F]/10 transition-all font-bold text-gray-800">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="rounded-xl border border-gray-200 p-4 bg-gray-50/50">
+                                <p class="text-[11px] font-black text-gray-500 uppercase tracking-wider mb-3">English</p>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-700 mb-2">{{ __('ui.main_headline') }}</label>
+                                    <input type="text" name="main_headline_en" value="{{ $settings['main_headline_en'] ?? ($settings['main_headline'] ?? 'Donate Blood, Save a Life Today') }}" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 outline-none focus:border-[#D32F2F] focus:ring-4 focus:ring-[#D32F2F]/10 transition-all font-bold text-gray-800">
+                                </div>
+                                <div class="mt-4">
+                                    <label class="block text-xs font-bold text-gray-700 mb-2">{{ __('ui.subtitle_description') }}</label>
+                                    <textarea name="hero_subtitle_en" rows="3" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 outline-none focus:border-[#D32F2F] focus:ring-4 focus:ring-[#D32F2F]/10 transition-all font-medium text-gray-800 resize-none">{{ $settings['hero_subtitle_en'] ?? ($settings['hero_subtitle'] ?? 'Urgent blood requests in Cambodia need your help. Connect directly with patients and be a hero.') }}</textarea>
+                                </div>
+                            </div>
+
+                            <div class="rounded-xl border border-gray-200 p-4 bg-gray-50/50">
+                                <p class="text-[11px] font-black text-gray-500 uppercase tracking-wider mb-3">Khmer</p>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-700 mb-2">{{ __('ui.main_headline') }}</label>
+                                    <input type="text" name="main_headline_km" value="{{ $settings['main_headline_km'] ?? '' }}" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 outline-none focus:border-[#D32F2F] focus:ring-4 focus:ring-[#D32F2F]/10 transition-all font-bold text-gray-800">
+                                </div>
+                                <div class="mt-4">
+                                    <label class="block text-xs font-bold text-gray-700 mb-2">{{ __('ui.subtitle_description') }}</label>
+                                    <textarea name="hero_subtitle_km" rows="3" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 outline-none focus:border-[#D32F2F] focus:ring-4 focus:ring-[#D32F2F]/10 transition-all font-medium text-gray-800 resize-none">{{ $settings['hero_subtitle_km'] ?? '' }}</textarea>
+                                </div>
+                            </div>
                         </div>
+
+                        {{-- Backward compatibility for old keys --}}
+                        <input type="hidden" name="main_headline" value="{{ $settings['main_headline_en'] ?? ($settings['main_headline'] ?? 'Donate Blood, Save a Life Today') }}">
+                        <input type="hidden" name="hero_subtitle" value="{{ $settings['hero_subtitle_en'] ?? ($settings['hero_subtitle'] ?? 'Urgent blood requests in Cambodia need your help. Connect directly with patients and be a hero.') }}">
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-2">Subtitle / Description</label>
-                            <textarea name="hero_subtitle" rows="3" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 outline-none focus:bg-white focus:border-[#D32F2F] focus:ring-4 focus:ring-[#D32F2F]/10 transition-all font-medium text-gray-800 resize-none">{{ $settings['hero_subtitle'] ?? 'Urgent blood requests in Cambodia need your help. Connect directly with patients and be a hero.' }}</textarea>
+                            <label class="block text-xs font-bold text-gray-700 mb-2">{{ __('ui.banner_image') }}</label>
+                            @if(!empty($settings['hero_banner_image']))
+                                <div class="mb-3 overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+                                    <img src="{{ asset('storage/' . $settings['hero_banner_image']) }}" alt="Hero Banner" class="w-full h-44 object-cover">
+                                </div>
+                                <label class="mb-3 inline-flex items-center gap-2 text-xs font-bold text-red-600 cursor-pointer">
+                                    <input type="checkbox" name="remove_hero_banner" value="1" class="rounded border-gray-300 text-red-600 focus:ring-red-500">
+                                    {{ __('ui.remove_current_banner') }}
+                                </label>
+                            @endif
+                            <input type="file" name="hero_banner_image" accept="image/*" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:bg-white focus:border-[#D32F2F] focus:ring-4 focus:ring-[#D32F2F]/10 transition-all font-medium text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-red-50 file:text-red-600 hover:file:bg-red-100">
+                            <p class="mt-2 text-[11px] font-medium text-gray-500">{{ __('ui.banner_image_help') }}</p>
+                            @error('hero_banner_image')
+                                <p class="mt-2 text-xs font-bold text-red-600">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>
                 </div>
@@ -51,33 +89,33 @@
                 {{-- Footer Contact Info --}}
                 <div class="bg-white rounded-[2rem] p-8 border border-gray-100 shadow-sm">
                     <h3 class="text-lg font-black text-gray-900 mb-6 flex items-center gap-3">
-                        <i class="fa-solid fa-address-book text-[#D32F2F]"></i> Footer Contact Info
+                        <i class="fa-solid fa-address-book text-[#D32F2F]"></i> {{ __('ui.footer_contact_info') }}
                     </h3>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-2">Support Email</label>
+                            <label class="block text-xs font-bold text-gray-700 mb-2">{{ __('ui.support_email') }}</label>
                             <div class="relative">
                                 <i class="fa-solid fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
                                 <input type="email" name="support_email" value="{{ $settings['support_email'] ?? 'support@bloodshare.kh' }}" class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-4 py-3.5 outline-none focus:bg-white focus:border-[#D32F2F] focus:ring-4 focus:ring-[#D32F2F]/10 transition-all font-bold text-gray-800">
                             </div>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-2">Office Location</label>
+                            <label class="block text-xs font-bold text-gray-700 mb-2">{{ __('ui.office_location') }}</label>
                             <div class="relative">
                                 <i class="fa-solid fa-location-dot absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
                                 <input type="text" name="office_location" value="{{ $settings['office_location'] ?? 'Phnom Penh, Cambodia' }}" class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-4 py-3.5 outline-none focus:bg-white focus:border-[#D32F2F] focus:ring-4 focus:ring-[#D32F2F]/10 transition-all font-bold text-gray-800">
                             </div>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-2">Facebook Link</label>
+                            <label class="block text-xs font-bold text-gray-700 mb-2">{{ __('ui.facebook_link') }}</label>
                             <div class="relative">
                                 <i class="fa-brands fa-facebook absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
                                 <input type="url" name="facebook_link" value="{{ $settings['facebook_link'] ?? '' }}" placeholder="https://facebook.com/..." class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-4 py-3.5 outline-none focus:bg-white focus:border-[#D32F2F] focus:ring-4 focus:ring-[#D32F2F]/10 transition-all font-bold text-gray-800">
                             </div>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-2">Telegram Link</label>
+                            <label class="block text-xs font-bold text-gray-700 mb-2">{{ __('ui.telegram_link') }}</label>
                             <div class="relative">
                                 <i class="fa-brands fa-telegram absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
                                 <input type="url" name="telegram_link" value="{{ $settings['telegram_link'] ?? '' }}" placeholder="https://t.me/..." class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-4 py-3.5 outline-none focus:bg-white focus:border-[#D32F2F] focus:ring-4 focus:ring-[#D32F2F]/10 transition-all font-bold text-gray-800">
@@ -94,15 +132,15 @@
                 {{-- System Toggles --}}
                 <div class="bg-white rounded-[2rem] p-8 border border-gray-100 shadow-sm">
                     <h3 class="text-lg font-black text-gray-900 mb-6 flex items-center gap-3">
-                        <i class="fa-solid fa-sliders text-[#D32F2F]"></i> System Toggles
+                        <i class="fa-solid fa-sliders text-[#D32F2F]"></i> {{ __('ui.system_toggles') }}
                     </h3>
                     
                     <div class="space-y-6">
                         {{-- Toggle 1: Maintenance Mode --}}
                         <div class="flex items-center justify-between p-4 border border-gray-100 rounded-2xl bg-gray-50/50">
                             <div>
-                                <p class="text-sm font-bold text-gray-900">Maintenance Mode</p>
-                                <p class="text-xs text-gray-500 font-medium">Disable public access</p>
+                                <p class="text-sm font-bold text-gray-900">{{ __('ui.maintenance_mode') }}</p>
+                                <p class="text-xs text-gray-500 font-medium">{{ __('ui.disable_public_access') }}</p>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" name="maintenance_mode" value="1" class="sr-only peer" {{ ($settings['maintenance_mode'] ?? '0') == '1' ? 'checked' : '' }}>
@@ -125,7 +163,7 @@
                         {{-- Notice from Brief --}}
                         <div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl">
                             <p class="text-[10px] text-blue-700 font-bold leading-tight">
-                                [cite_start]<i class="fa-solid fa-circle-info mr-1"></i> Note: The Project Brief recommends preventing Guests from creating requests to avoid abuse [cite: 1133-1135].
+                                [cite_start]<i class="fa-solid fa-circle-info mr-1"></i> {{ __('ui.project_brief_note') }} [cite: 1133-1135].
                             </p>
                         </div>
 

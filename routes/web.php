@@ -36,6 +36,17 @@ Route::get('/about', function () {
     return view('about');
 })->name('about');
 
+// Frontend Language Switch (EN/KM)
+Route::get('/language/{locale}', function ($locale) {
+    if (!in_array($locale, ['en', 'km'], true)) {
+        abort(404);
+    }
+
+    session(['locale' => $locale]);
+
+    return redirect()->back();
+})->name('language.switch');
+
 
 /*
 |--------------------------------------------------------------------------
@@ -98,6 +109,17 @@ Route::middleware(['auth'])->prefix('user')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth'])->prefix('admin')->group(function () {
+    // Admin Language Switch (isolated from frontend)
+    Route::get('/language/{locale}', function ($locale) {
+        if (!in_array($locale, ['en', 'km'], true)) {
+            abort(404);
+        }
+
+        session(['admin_locale' => $locale]);
+
+        return redirect()->back();
+    })->name('admin.language.switch');
+
     
     // Dashboard
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
@@ -126,10 +148,6 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     // Configuration & Settings
     Route::get('/settings', [AdminController::class, 'settings'])->name('admin.settings');
     Route::post('/settings', [AdminController::class, 'updateSettings'])->name('admin.settings.update');
-
-    // Localization Settings
-    Route::get('/settings/localization', [AdminController::class, 'localization'])->name('admin.settings.localization');
-    Route::post('/settings/localization', [AdminController::class, 'updateLocalization'])->name('admin.settings.localization.update');
 
     // Admin Management Additions (KYC & Reports)
     Route::get('/kyc', [AdminController::class, 'kyc'])->name('admin.kyc');

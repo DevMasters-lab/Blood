@@ -1,15 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ app()->getLocale() }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blood Donation Cambodia</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    {{-- Alpine.js for Mobile Menu, AJAX Search & Profile Dropdown --}}
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        .font-km {
+            font-family: 'Kantumruy Pro', sans-serif !important;
+        }
+    </style>
 </head>
-<body class="bg-gray-50 text-gray-800 flex flex-col min-h-screen" x-data="{ mobileMenuOpen: false }">
+<body class="bg-gray-50 text-gray-800 flex flex-col min-h-screen {{ app()->getLocale() === 'km' ? 'font-km' : '' }}" x-data="{ mobileMenuOpen: false }">
     
     {{-- FETCH SETTINGS FROM DATABASE ONCE FOR THE WHOLE PAGE --}}
     @php
@@ -27,8 +34,8 @@
                 
                 {{-- Desktop Menu --}}
                 <div class="hidden md:flex space-x-8 items-center">
-                    <a href="{{ route('home') }}" class="text-gray-600 hover:text-red-600 font-medium transition">Home</a>
-                    <a href="{{ route('home') }}#requests" class="text-gray-600 hover:text-red-600 font-medium transition">Urgent Requests</a>
+                    <a href="{{ route('home') }}" class="text-gray-600 hover:text-red-600 font-medium transition">{{ __('ui.home') }}</a>
+                    <a href="{{ route('home') }}#requests" class="text-gray-600 hover:text-red-600 font-medium transition">{{ __('ui.urgent_requests') }}</a>
                 </div>
                 
                 {{-- Desktop Actions & Profile Dropdown --}}
@@ -37,19 +44,19 @@
                         {{-- ADMIN VIEW --}}
                         @if(auth()->user()->usertype === 'admin')
                             <a href="{{ route('admin.dashboard') }}" class="flex items-center bg-slate-900 text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-md hover:bg-black transition-all mr-6">
-                                <i class="fa-solid fa-shield-halved mr-2"></i> Admin Portal
+                                <i class="fa-solid fa-shield-halved mr-2"></i> {{ __('ui.admin_portal') }}
                             </a>
                             <div class="pl-6 border-l border-gray-200">
                                 <form action="{{ route('logout') }}" method="POST">
                                     @csrf
-                                    <button type="submit" class="text-gray-500 hover:text-red-600 font-bold transition">Logout</button>
+                                    <button type="submit" class="text-gray-500 hover:text-red-600 font-bold transition">{{ __('ui.logout') }}</button>
                                 </form>
                             </div>
                         {{-- NORMAL USER VIEW --}}
                         @else
                             {{-- Request Blood Button --}}
                             <a href="{{ route('user.requests.create') }}" class="flex items-center bg-red-50 text-red-600 px-5 py-2.5 rounded-full font-bold text-sm shadow-sm hover:bg-red-600 hover:text-white transition-all border border-red-100 mr-6">
-                                <i class="fa-solid fa-hand-holding-medical mr-2"></i> Request Blood
+                                <i class="fa-solid fa-hand-holding-medical mr-2"></i> {{ __('ui.request_blood') }}
                             </a>
 
                             {{-- PROFILE DROPDOWN (with vertical divider) --}}
@@ -64,7 +71,7 @@
                                     @endif
                                     <div class="flex flex-col text-left mr-2">
                                         <span class="text-sm font-bold text-gray-800 leading-tight">{{ auth()->user()->name }}</span>
-                                        <span class="text-[10px] font-bold text-red-500 uppercase tracking-wider">{{ auth()->user()->blood_type ?? 'N/A' }} Donor</span>
+                                        <span class="text-[10px] font-bold text-red-500 uppercase tracking-wider">{{ auth()->user()->blood_type ?? __('ui.not_available') }} {{ __('ui.donor') }}</span>
                                     </div>
                                     <i class="fa-solid fa-chevron-down text-gray-400 text-xs transition-transform duration-200" :class="profileOpen ? 'rotate-180' : ''"></i>
                                 </button>
@@ -80,13 +87,13 @@
                                      class="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-xl py-2 border border-gray-100 z-50" style="display: none;">
                                     
                                     <a href="{{ route('user.dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 font-medium transition">
-                                        <i class="fa-solid fa-house mr-2 w-4 text-center"></i> My Dashboard
+                                        <i class="fa-solid fa-house mr-2 w-4 text-center"></i> {{ __('ui.my_dashboard') }}
                                     </a>
                                     <a href="{{ route('user.wallet') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 font-medium transition">
-                                        <i class="fa-solid fa-wallet mr-2 w-4 text-center"></i> My Wallet
+                                        <i class="fa-solid fa-wallet mr-2 w-4 text-center"></i> {{ __('ui.my_wallet') }}
                                     </a>
                                     <a href="{{ route('user.profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 font-medium transition">
-                                        <i class="fa-solid fa-user-gear mr-2 w-4 text-center"></i> Profile Settings
+                                        <i class="fa-solid fa-user-gear mr-2 w-4 text-center"></i> {{ __('ui.profile_settings') }}
                                     </a>
                                     
                                     <div class="border-t border-gray-100 my-1"></div>
@@ -94,7 +101,7 @@
                                     <form action="{{ route('logout') }}" method="POST" class="block">
                                         @csrf
                                         <button type="submit" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 font-medium transition">
-                                            <i class="fa-solid fa-power-off mr-2 w-4 text-center"></i> Logout
+                                            <i class="fa-solid fa-power-off mr-2 w-4 text-center"></i> {{ __('ui.logout') }}
                                         </button>
                                     </form>
                                 </div>
@@ -103,17 +110,48 @@
                     @else
                         {{-- Guests Request Blood Button --}}
                         <a href="{{ route('user.login') }}" class="flex items-center bg-red-50 text-red-600 px-5 py-2.5 rounded-full font-bold text-sm shadow-sm hover:bg-red-600 hover:text-white transition-all border border-red-100 mr-6">
-                            <i class="fa-solid fa-hand-holding-medical mr-2"></i> Request Blood
+                            <i class="fa-solid fa-hand-holding-medical mr-2"></i> {{ __('ui.request_blood') }}
                         </a>
                         
                         {{-- Guest Auth Buttons (with vertical divider) --}}
                         <div class="pl-6 border-l border-gray-200 flex items-center">
-                            <a href="{{ route('user.login') }}" class="text-gray-600 hover:text-red-600 mr-6 font-bold transition">Login</a>
+                            <a href="{{ route('user.login') }}" class="text-gray-600 hover:text-red-600 mr-6 font-bold transition">{{ __('ui.login') }}</a>
                             <a href="{{ route('register') }}" class="bg-red-600 text-white px-6 py-2.5 rounded-full font-bold shadow-lg shadow-red-200 hover:bg-red-700 hover:shadow-xl transition transform hover:-translate-y-0.5">
-                                Register 
+                                {{ __('ui.register') }} 
                             </a>
                         </div>
                     @endauth
+
+                    {{-- LANGUAGE SWITCHER (MOVED TO THE FAR RIGHT HERE) --}}
+                    @if(($settings['enable_language_switcher'] ?? '1') === '1')
+                        <div class="relative ml-6 pl-6 border-l border-gray-200" x-data="{ langOpen: false }" @click.away="langOpen = false">
+                            <button @click="langOpen = !langOpen" class="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white pl-2 pr-3 py-1.5 shadow-sm hover:border-red-200 hover:bg-red-50/40 transition">
+                                <span class="flex h-7 w-7 items-center justify-center rounded-full bg-red-50 text-red-500">
+                                    <i class="fa-solid fa-globe text-xs"></i>
+                                </span>
+                                <span class="text-xs font-black text-gray-700 uppercase">{{ app()->getLocale() }}</span>
+                                <i class="fa-solid fa-chevron-down text-[10px] text-gray-400 transition-transform" :class="langOpen ? 'rotate-180' : ''"></i>
+                            </button>
+
+                            <div x-show="langOpen"
+                                 x-transition:enter="transition ease-out duration-100"
+                                 x-transition:enter-start="transform opacity-0 scale-95"
+                                 x-transition:enter-end="transform opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-75"
+                                 x-transition:leave-start="transform opacity-100 scale-100"
+                                 x-transition:leave-end="transform opacity-0 scale-95"
+                                 class="absolute right-0 mt-2 w-44 rounded-xl border border-gray-100 bg-white p-2 shadow-xl z-50" style="display: none;">
+                                <a href="{{ route('language.switch', 'en') }}" class="flex items-center justify-between rounded-lg px-3 py-2 text-sm font-bold transition {{ app()->getLocale() === 'en' ? 'bg-red-50 text-red-600' : 'text-gray-700 hover:bg-gray-50' }}">
+                                    <span class="inline-flex items-center gap-2"><span>🇬🇧</span><span>{{ __('ui.english') }}</span></span>
+                                    <span class="text-[11px] font-black">EN</span>
+                                </a>
+                                <a href="{{ route('language.switch', 'km') }}" class="mt-1 flex items-center justify-between rounded-lg px-3 py-2 text-sm font-bold transition {{ app()->getLocale() === 'km' ? 'bg-red-50 text-red-600' : 'text-gray-700 hover:bg-gray-50' }}">
+                                    <span class="inline-flex items-center gap-2"><span>🇰🇭</span><span>{{ __('ui.khmer') }}</span></span>
+                                    <span class="text-[11px] font-black">KM</span>
+                                </a>
+                            </div>
+                        </div>
+                    @endif
                 </div>
 
                 {{-- Mobile Menu Button --}}
@@ -130,22 +168,30 @@
                  x-transition:enter-start="opacity-0 -translate-y-2"
                  x-transition:enter-end="opacity-100 translate-y-0"
                  class="md:hidden mt-4 pb-4 border-t border-gray-100" style="display: none;">
-                <a href="{{ route('home') }}" class="block py-3 text-gray-600 hover:text-red-600 font-medium">Home</a>
-                <a href="{{ route('home') }}#requests" class="block py-3 text-gray-600 hover:text-red-600 font-medium">Urgent Requests</a>
+                <a href="{{ route('home') }}" class="block py-3 text-gray-600 hover:text-red-600 font-medium">{{ __('ui.home') }}</a>
+                <a href="{{ route('home') }}#requests" class="block py-3 text-gray-600 hover:text-red-600 font-medium">{{ __('ui.urgent_requests') }}</a>
+
+                @if(($settings['enable_language_switcher'] ?? '1') === '1')
+                    <div class="flex items-center gap-2 py-3">
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wide">{{ __('ui.language') }}</span>
+                        <a href="{{ route('language.switch', 'en') }}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition {{ app()->getLocale() === 'en' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600' }}"><span>🇬🇧</span><span>EN</span></a>
+                        <a href="{{ route('language.switch', 'km') }}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition {{ app()->getLocale() === 'km' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600' }}"><span>🇰🇭</span><span>KM</span></a>
+                    </div>
+                @endif
                 
                 @auth
                     {{-- ADMIN VIEW --}}
                     @if(auth()->user()->usertype === 'admin')
                         <div class="py-3 border-t border-gray-100 mt-2">
-                            <a href="{{ route('admin.dashboard') }}" class="block py-2 text-slate-900 font-black"><i class="fa-solid fa-shield-halved mr-2"></i> Admin Portal</a>
+                            <a href="{{ route('admin.dashboard') }}" class="block py-2 text-slate-900 font-black"><i class="fa-solid fa-shield-halved mr-2"></i> {{ __('ui.admin_portal') }}</a>
                             <form action="{{ route('logout') }}" method="POST">
                                 @csrf
-                                <button class="text-gray-500 hover:text-red-600 font-medium w-full text-left py-2">Logout</button>
+                                <button class="text-gray-500 hover:text-red-600 font-medium w-full text-left py-2">{{ __('ui.logout') }}</button>
                             </form>
                         </div>
                     {{-- NORMAL USER VIEW --}}
                     @else
-                        <a href="{{ route('user.requests.create') }}" class="block py-3 text-red-600 font-bold">Request Blood</a>
+                        <a href="{{ route('user.requests.create') }}" class="block py-3 text-red-600 font-bold">{{ __('ui.request_blood') }}</a>
                         <div class="py-3 border-t border-gray-100 mt-2">
                             <div class="flex items-center mb-3">
                                 @if(auth()->user()->avatar)
@@ -155,22 +201,22 @@
                                 @endif
                                 <div class="flex flex-col">
                                     <span class="font-bold text-gray-800 leading-tight">{{ auth()->user()->name }}</span>
-                                    <span class="text-[10px] font-bold text-red-500 uppercase tracking-wider">{{ auth()->user()->blood_type ?? 'N/A' }} Donor</span>
+                                    <span class="text-[10px] font-bold text-red-500 uppercase tracking-wider">{{ auth()->user()->blood_type ?? __('ui.not_available') }} {{ __('ui.donor') }}</span>
                                 </div>
                             </div>
-                            <a href="{{ route('user.dashboard') }}" class="block py-2 text-gray-600 hover:text-red-600 font-medium">My Dashboard</a>
-                            <a href="{{ route('user.profile') }}" class="block py-2 text-gray-600 hover:text-red-600 font-medium">Profile Settings</a>
+                            <a href="{{ route('user.dashboard') }}" class="block py-2 text-gray-600 hover:text-red-600 font-medium">{{ __('ui.my_dashboard') }}</a>
+                            <a href="{{ route('user.profile') }}" class="block py-2 text-gray-600 hover:text-red-600 font-medium">{{ __('ui.profile_settings') }}</a>
                             <form action="{{ route('logout') }}" method="POST">
                                 @csrf
-                                <button class="text-gray-500 hover:text-red-600 font-medium w-full text-left py-2">Logout</button>
+                                <button class="text-gray-500 hover:text-red-600 font-medium w-full text-left py-2">{{ __('ui.logout') }}</button>
                             </form>
                         </div>
                     @endif
                 @else
-                    <a href="{{ route('user.requests.create') }}" class="block py-3 text-red-600 font-bold">Request Blood</a>
+                    <a href="{{ route('user.requests.create') }}" class="block py-3 text-red-600 font-bold">{{ __('ui.request_blood') }}</a>
                     <div class="flex flex-col gap-3 mt-4 border-t border-gray-100 pt-4">
-                        <a href="{{ route('user.login') }}" class="text-center w-full py-3 border border-gray-200 rounded-xl font-bold text-gray-600">Login</a>
-                        <a href="{{ route('register') }}" class="text-center w-full py-3 bg-red-600 text-white rounded-xl font-bold shadow-md">Register</a>
+                        <a href="{{ route('user.login') }}" class="text-center w-full py-3 border border-gray-200 rounded-xl font-bold text-gray-600">{{ __('ui.login') }}</a>
+                        <a href="{{ route('register') }}" class="text-center w-full py-3 bg-red-600 text-white rounded-xl font-bold shadow-md">{{ __('ui.register') }}</a>
                     </div>
                 @endauth
             </div>
@@ -178,33 +224,47 @@
     </nav>
 
     {{-- HERO SECTION WITH DYNAMIC SETTINGS --}}
-    <div class="relative bg-gradient-to-br from-red-700 to-red-600 pt-32 pb-20 px-6 text-center text-white overflow-hidden">
+    @php
+        $heroBanner = $settings['hero_banner_image'] ?? null;
+        $locale = app()->getLocale();
+        $headline = $locale === 'km'
+            ? ($settings['main_headline_km'] ?? $settings['main_headline_en'] ?? $settings['main_headline'] ?? 'Donate Blood, Save a Life Today')
+            : ($settings['main_headline_en'] ?? $settings['main_headline'] ?? 'Donate Blood, Save a Life Today');
+        $subtitle = $locale === 'km'
+            ? ($settings['hero_subtitle_km'] ?? $settings['hero_subtitle_en'] ?? $settings['hero_subtitle'] ?? 'Urgent blood requests in Cambodia need your help. Connect directly with patients and be a hero.')
+            : ($settings['hero_subtitle_en'] ?? $settings['hero_subtitle'] ?? 'Urgent blood requests in Cambodia need your help. Connect directly with patients and be a hero.');
+    @endphp
+        <div class="relative pt-32 pb-20 px-6 text-center text-white overflow-hidden bg-gradient-to-br from-red-700 to-red-600">
+            @if($heroBanner)
+                <img src="{{ asset('storage/' . $heroBanner) }}" alt="Hero Banner" class="absolute inset-0 w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-br from-red-900/75 to-red-600/75"></div>
+            @endif
         <div class="absolute top-0 left-0 w-full h-full opacity-10">
             <i class="fa-solid fa-heart-pulse absolute top-10 left-10 text-9xl"></i>
             <i class="fa-solid fa-hand-holding-medical absolute bottom-10 right-10 text-9xl"></i>
         </div>
         <div class="relative z-10 max-w-3xl mx-auto">
             <span class="bg-white/20 backdrop-blur-md text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-widest mb-6 inline-block">
-                Emergency Response
+                {{ __('ui.emergency_response') }}
             </span>
             
             {{-- DYNAMIC HEADLINE --}}
             <h1 class="text-4xl md:text-6xl font-black mb-6 leading-tight">
-                {{ $settings['main_headline'] ?? 'Donate Blood, Save a Life Today' }}
+                {{ $headline }}
             </h1>
             
             {{-- DYNAMIC SUBTITLE --}}
             <p class="text-lg md:text-xl mb-10 text-red-100 font-medium">
-                {{ $settings['hero_subtitle'] ?? 'Urgent blood requests in Cambodia need your help. Connect directly with patients and be a hero.' }}
+                {{ $subtitle }}
             </p>
             
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 <a href="#requests" class="bg-white text-red-600 font-black py-4 px-10 rounded-full shadow-xl hover:bg-gray-50 transition transform hover:scale-105">
-                    Find Requests
+                    {{ __('ui.find_requests') }}
                 </a>
                 @guest
                 <a href="{{ route('register') }}" class="bg-red-800 text-white font-bold py-4 px-10 rounded-full shadow-xl hover:bg-red-900 transition">
-                    Register as Donor
+                    {{ __('ui.register_as_donor') }}
                 </a>
                 @endguest
             </div>
@@ -263,7 +323,7 @@
         
         <div class="text-center mb-16">
             <h2 class="text-3xl md:text-4xl font-black text-gray-900 mb-4 tracking-tight">
-                Urgent Blood Needed
+                {{ __('ui.urgent_blood_needed_short') }}
             </h2>
             <div class="flex items-center justify-center gap-3">
                 <div class="h-1 w-12 md:w-24 bg-gradient-to-r from-transparent via-red-400 to-red-600 rounded-full opacity-80"></div>
@@ -287,7 +347,7 @@
                     <div class="flex-grow relative border-r border-gray-100">
                         <i class="fa-solid fa-droplet text-red-500 absolute left-4 top-1/2 transform -translate-y-1/2 text-lg"></i>
                         <select name="blood_type" class="w-full bg-transparent border-none pl-12 pr-10 py-3 outline-none appearance-none font-bold text-gray-700 cursor-pointer h-full">
-                            <option value="">Filter by Blood Type...</option>
+                            <option value="">{{ __('ui.filter_by_blood_type') }}</option>
                             <option value="A+" {{ request('blood_type') == 'A+' ? 'selected' : '' }}>A+</option>
                             <option value="A-" {{ request('blood_type') == 'A-' ? 'selected' : '' }}>A-</option>
                             <option value="B+" {{ request('blood_type') == 'B+' ? 'selected' : '' }}>B+</option>
@@ -302,7 +362,7 @@
                     
                     {{-- Search Button --}}
                     <button type="submit" :disabled="isLoading" class="bg-red-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-red-700 transition flex items-center ml-2 shadow-md disabled:opacity-75 disabled:cursor-not-allowed">
-                        <span x-show="!isLoading">Search</span>
+                        <span x-show="!isLoading">{{ __('ui.search') }}</span>
                         <span x-show="isLoading" class="flex items-center" style="display: none;">
                             <i class="fa-solid fa-circle-notch fa-spin mr-2"></i> ...
                         </span>
@@ -325,8 +385,8 @@
                     <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-400 mb-6">
                         <i class="fa-regular fa-folder-open text-4xl"></i>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-800">No Requests Found</h3>
-                    <p class="text-gray-500 mt-2 max-w-sm text-center">There are no urgent requests matching your search criteria right now.</p>
+                    <h3 class="text-xl font-bold text-gray-800">{{ __('ui.no_requests_found') }}</h3>
+                    <p class="text-gray-500 mt-2 max-w-sm text-center">{{ __('ui.no_requests_match') }}</p>
                 </div>
             @else
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
@@ -341,7 +401,7 @@
                             <div class="pr-3">
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-50 text-red-600 text-[10px] font-bold uppercase tracking-wider mb-2 border border-red-100/50">
                                     <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-                                    Urgent Need
+                                    {{ __('ui.urgent_need') }}
                                 </span>
                                 <h3 class="text-xl font-black text-gray-900 leading-snug line-clamp-2 group-hover:text-red-600 transition-colors">{{ $req->hospital_name }}</h3>
                             </div>
@@ -358,7 +418,7 @@
                                     <i class="fa-solid fa-user-injured text-xs"></i>
                                 </div>
                                 <div>
-                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Patient</p>
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{{ __('ui.patient') }}</p>
                                     <p class="text-sm font-bold text-gray-800 truncate">{{ $req->patient_name ?? 'Anonymous' }}</p>
                                 </div>
                             </div>
@@ -369,7 +429,7 @@
                                     <i class="fa-solid fa-phone text-xs"></i>
                                 </div>
                                 <div>
-                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Contact Phone</p>
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{{ __('ui.contact_phone') }}</p>
                                     <p class="text-sm font-bold text-gray-800">{{ $req->contact_phone ?? 'No number' }}</p>
                                 </div>
                             </div>
@@ -391,22 +451,22 @@
                             {{-- Added Requested By under Needed By --}}
                             <div class="space-y-3 mb-5">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Needed By</span>
+                                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{{ __('ui.needed_by') }}</span>
                                     <span class="text-xs font-black text-red-600 bg-red-50 px-2.5 py-1 rounded-md border border-red-100">{{ $req->needed_date->format('d M Y') }}</span>
                                 </div>
                                 <div class="flex items-center justify-between">
-                                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Requested By</span>
-                                    <span class="text-sm font-bold text-gray-800">{{ $req->requester->name ?? 'User' }}</span>
+                                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{{ __('ui.requested_by') }}</span>
+                                    <span class="text-sm font-bold text-gray-800">{{ $req->requester->name ?? __('ui.default_user') }}</span>
                                 </div>
                             </div>
                             <div class="flex gap-3">
                                 <a href="tel:{{ $req->contact_phone ?? '' }}" class="px-5 h-12 shrink-0 bg-white border border-gray-200 text-gray-700 rounded-xl flex items-center justify-center gap-2 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors shadow-sm font-bold text-sm">
-                                    <i class="fa-solid fa-phone"></i> Call
+                                    <i class="fa-solid fa-phone"></i> {{ __('ui.call') }}
                                 </a>
                                 
                                 {{-- Primary Action Button --}}
                                 <a href="{{ auth()->check() ? route('user.donate') : route('user.login') }}" class="flex-1 bg-red-600 text-white flex items-center justify-center gap-2 rounded-xl font-bold text-sm hover:bg-red-700 transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 border border-transparent">
-                                    <i class="fa-solid fa-hand-holding-medical"></i> I Can Donate
+                                    <i class="fa-solid fa-hand-holding-medical"></i> {{ __('ui.i_can_donate') }}
                                 </a>
                             </div>
                         </div>
@@ -432,19 +492,19 @@
                         <i class="fa-solid fa-heart-pulse mr-3 text-red-500"></i> BloodShare KH
                     </a>
                     <p class="text-gray-400 text-sm leading-relaxed max-w-sm">
-                        A centralized platform connecting generous blood donors with patients in critical need across Cambodia. Every donation counts.
+                        {{ __('ui.about_platform') }}
                     </p>
                 </div>
                 <div>
-                    <h4 class="font-bold text-white mb-6">Platform</h4>
+                    <h4 class="font-bold text-white mb-6">{{ __('ui.platform') }}</h4>
                     <ul class="space-y-4 text-sm text-gray-400">
-                        <li><a href="/" class="hover:text-red-500 transition">Home</a></li>
-                        <li><a href="#requests" class="hover:text-red-500 transition">Urgent Requests</a></li>
-                        <li><a href="{{ route('register') }}" class="hover:text-red-500 transition">Become a Donor</a></li>
+                        <li><a href="/" class="hover:text-red-500 transition">{{ __('ui.home') }}</a></li>
+                        <li><a href="#requests" class="hover:text-red-500 transition">{{ __('ui.urgent_requests') }}</a></li>
+                        <li><a href="{{ route('register') }}" class="hover:text-red-500 transition">{{ __('ui.become_a_donor') }}</a></li>
                     </ul>
                 </div>
                 <div>
-                    <h4 class="font-bold text-white mb-6">Contact</h4>
+                    <h4 class="font-bold text-white mb-6">{{ __('ui.contact') }}</h4>
                     <ul class="space-y-4 text-sm text-gray-400">
                         {{-- DYNAMIC EMAIL --}}
                         <li class="flex items-start">
@@ -460,7 +520,7 @@
                 </div>
             </div>
             <div class="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
-                <p class="text-xs text-gray-500">&copy; 2026 BloodShare KH. All rights reserved.</p>
+                <p class="text-xs text-gray-500">&copy; 2026 BloodShare KH. {{ __('ui.all_rights_reserved') }}</p>
                 <div class="flex gap-4 mt-4 md:mt-0">
                     {{-- DYNAMIC FACEBOOK LINK --}}
                     <a href="{{ $settings['facebook_link'] ?? '#' }}" class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white transition" target="_blank">

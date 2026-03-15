@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Append your custom Maintenance Mode middleware to the 'web' group
         $middleware->web(append: [
             \App\Http\Middleware\CheckMaintenanceMode::class,
+            \App\Http\Middleware\SetLocale::class,
         ]);
         
     })

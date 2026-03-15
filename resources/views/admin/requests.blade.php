@@ -6,12 +6,12 @@
     {{-- Header section with total count --}}
     <div class="flex justify-between items-center">
         <div>
-            <h2 class="text-2xl font-black text-gray-900 tracking-tight">Manage Blood Requests</h2>
-            <p class="text-sm text-gray-500 font-medium mt-1">Review and remove incoming blood allocation needs.</p>
+            <h2 class="text-2xl font-black text-gray-900 tracking-tight">{{ __('ui.manage_blood_requests') }}</h2>
+            <p class="text-sm text-gray-500 font-medium mt-1">{{ __('ui.review_remove_requests') }}</p>
         </div>
         <div class="bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 flex items-center gap-3">
             <i class="fa-solid fa-notes-medical text-red-500"></i>
-            <span class="text-sm font-bold text-gray-700">Total Requests: {{ $requests->total() }}</span>
+            <span class="text-sm font-bold text-gray-700">{{ __('ui.total_requests_count', ['count' => $requests->total()]) }}</span>
         </div>
     </div>
 
@@ -33,13 +33,13 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-gray-50/50 border-b border-gray-100">
-                        <th class="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Requested By</th>
-                        <th class="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Email</th>
-                        <th class="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Hospital</th>
-                        <th class="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Type</th>
-                        <th class="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Date Needed</th>
-                        <th class="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Status</th>
-                        <th class="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Actions</th>
+                        <th class="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ __('ui.requested_by') }}</th>
+                        <th class="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ __('ui.email') }}</th>
+                        <th class="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ __('ui.hospital') }}</th>
+                        <th class="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">{{ __('ui.type') }}</th>
+                        <th class="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">{{ __('ui.date_needed') }}</th>
+                        <th class="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">{{ __('ui.status') }}</th>
+                        <th class="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">{{ __('ui.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50">
@@ -57,7 +57,7 @@
                             </div>
                         </td>
                         <td class="px-8 py-6">
-                            <div class="font-bold text-blue-600">{{ $req->requester->email ?? 'N/A' }}</div>
+                            <div class="font-bold text-blue-600">{{ $req->requester->email ?? __('ui.not_available') }}</div>
                         </td>
                         <td class="px-8 py-6">{{ $req->hospital_name }}</td>
                         <td class="px-8 py-6 text-center font-bold text-red-600">{{ $req->blood_type }}</td>
@@ -71,20 +71,20 @@
                         <div class="flex justify-center items-center gap-2">
                             {{-- Mark as Done Button (Only show if open) --}}
                             @if($req->status == 'open')
-                                <form action="{{ route('admin.requests.status', $req->id) }}" method="POST" onsubmit="return confirm('Mark this request as completed?')">
+                                <form action="{{ route('admin.requests.status', $req->id) }}" method="POST" data-confirm="{{ __('ui.confirm_mark_completed') }}" onsubmit="return confirm(this.dataset.confirm)">
                                     @csrf
                                     <input type="hidden" name="status" value="completed">
-                                    <button type="submit" class="w-10 h-10 rounded-xl bg-green-50 text-green-600 hover:bg-green-500 hover:text-white flex items-center justify-center transition-all shadow-sm" title="Mark as Done">
+                                    <button type="submit" class="w-10 h-10 rounded-xl bg-green-50 text-green-600 hover:bg-green-500 hover:text-white flex items-center justify-center transition-all shadow-sm" title="{{ __('ui.mark_done') }}">
                                         <i class="fa-solid fa-check"></i>
                                     </button>
                                 </form>
                             @endif
 
                             {{-- Delete Button --}}
-                            <form action="{{ route('admin.requests.delete', $req->id) }}" method="POST" onsubmit="return confirm('Are you sure? This will remove the request permanently.')">
+                            <form action="{{ route('admin.requests.delete', $req->id) }}" method="POST" data-confirm="{{ __('ui.confirm_delete_request') }}" onsubmit="return confirm(this.dataset.confirm)">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="w-10 h-10 rounded-xl bg-red-50 text-red-600 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all shadow-sm" title="Delete Request">
+                                <button type="submit" class="w-10 h-10 rounded-xl bg-red-50 text-red-600 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all shadow-sm" title="{{ __('ui.delete_request') }}">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </button>
                             </form>
@@ -94,7 +94,7 @@
                     @empty
                     <tr>
                         <td colspan="7" class="px-8 py-16 text-center text-gray-400 font-medium italic">
-                            No blood requests found.
+                            {{ __('ui.no_blood_requests') }}
                         </td>
                     </tr>
                     @endforelse

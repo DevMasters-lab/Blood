@@ -6,16 +6,18 @@
     {{-- Header & Date Filter --}}
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-            <h2 class="text-2xl font-black text-gray-900 tracking-tight">Analytics & Reports</h2>
-            <p class="text-sm text-gray-500 mt-1 font-medium">System performance, donation metrics, and request fulfillment.</p>
+            <h2 class="text-2xl font-black text-gray-900 tracking-tight">{{ __('ui.analytics_reports') }}</h2>
+            <p class="text-sm text-gray-500 mt-1 font-medium">{{ __('ui.reports_header_desc') }}</p>
         </div>
         <div class="flex gap-3">
-            <select class="bg-white border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-red-100 shadow-sm cursor-pointer appearance-none">
-                <option value="today">Today</option>
-                <option value="7days" selected>Last 7 Days</option>
-                <option value="30days">Last 30 Days</option>
-                <option value="all">All Time</option>
-            </select>
+            <form method="GET" action="{{ route('admin.reports') }}">
+                <select name="range" onchange="this.form.submit()" class="bg-white border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-red-100 shadow-sm cursor-pointer appearance-none">
+                    <option value="today" {{ $selectedRange === 'today' ? 'selected' : '' }}>{{ __('ui.today') }}</option>
+                    <option value="7days" {{ $selectedRange === '7days' ? 'selected' : '' }}>{{ __('ui.last_7_days') }}</option>
+                    <option value="30days" {{ $selectedRange === '30days' ? 'selected' : '' }}>{{ __('ui.last_30_days') }}</option>
+                    <option value="all" {{ $selectedRange === 'all' ? 'selected' : '' }}>{{ __('ui.all_time') }}</option>
+                </select>
+            </form>
         </div>
     </div>
 
@@ -39,10 +41,10 @@
             <div class="absolute -right-6 -top-6 w-24 h-24 bg-blue-50 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
             <div class="relative z-10">
                 <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl mb-4"><i class="fa-solid fa-hand-holding-medical"></i></div>
-                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Requests</p>
+                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ __('ui.total_requests') }}</p>
                 <div class="flex items-end gap-3 mt-1">
                     <p class="text-3xl font-black text-gray-900">{{ $totalRequests }}</p>
-                    <p class="text-xs font-bold text-blue-500 mb-1.5">All Time</p>
+                    <p class="text-xs font-bold text-blue-500 mb-1.5">{{ __('ui.all_time') }}</p>
                 </div>
             </div>
         </div>
@@ -52,10 +54,10 @@
             <div class="absolute -right-6 -top-6 w-24 h-24 bg-green-50 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
             <div class="relative z-10">
                 <div class="w-12 h-12 rounded-xl bg-green-100 text-green-600 flex items-center justify-center text-xl mb-4"><i class="fa-solid fa-check-double"></i></div>
-                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Completed Requests</p>
+                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ __('ui.completed_requests') }}</p>
                 <div class="flex items-end gap-3 mt-1">
                     <p class="text-3xl font-black text-gray-900">{{ $completedRequests }}</p>
-                    <p class="text-xs font-bold text-gray-400 mb-1.5">{{ $completedPct }}% Success</p>
+                    <p class="text-xs font-bold text-gray-400 mb-1.5">{{ $completedPct }}% {{ __('ui.verified_success') }}</p>
                 </div>
             </div>
         </div>
@@ -65,10 +67,10 @@
             <div class="absolute -right-6 -top-6 w-24 h-24 bg-red-50 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
             <div class="relative z-10">
                 <div class="w-12 h-12 rounded-xl bg-red-100 text-red-600 flex items-center justify-center text-xl mb-4"><i class="fa-solid fa-hourglass-end"></i></div>
-                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Expired Requests</p>
+                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ __('ui.expired_requests') }}</p>
                 <div class="flex items-end gap-3 mt-1">
                     <p class="text-3xl font-black text-gray-900">{{ $expiredRequests }}</p>
-                    <p class="text-xs font-bold text-red-500 mb-1.5">Missed Target</p>
+                    <p class="text-xs font-bold text-red-500 mb-1.5">{{ __('ui.missed_target') }}</p>
                 </div>
             </div>
         </div>
@@ -78,10 +80,10 @@
             <div class="absolute -right-6 -top-6 w-24 h-24 bg-white/5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
             <div class="relative z-10">
                 <div class="w-12 h-12 rounded-xl bg-[#D32F2F] text-white flex items-center justify-center text-xl mb-4 shadow-lg shadow-red-900/50"><i class="fa-solid fa-droplet"></i></div>
-                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Verified Donations</p>
+                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ __('ui.verified_donations') }}</p>
                 <div class="flex items-end gap-3 mt-1">
                     <p class="text-3xl font-black text-white">{{ $verifiedDonations }}</p>
-                    <p class="text-xs font-bold text-[#D32F2F] mb-1.5">Units Donated</p>
+                    <p class="text-xs font-bold text-[#D32F2F] mb-1.5">{{ __('ui.units_donated') }}</p>
                 </div>
             </div>
         </div>
@@ -93,7 +95,7 @@
         {{-- Visual Status Breakdown --}}
         <div class="lg:col-span-2 bg-white rounded-[2rem] p-8 border border-gray-100 shadow-sm">
             <div class="flex justify-between items-center mb-8">
-                <h3 class="text-lg font-black text-gray-900">Request Fulfillment Status</h3>
+                <h3 class="text-lg font-black text-gray-900">{{ __('ui.request_fulfillment_status') }}</h3>
                 <button class="text-sm font-bold text-gray-400 hover:text-[#D32F2F] transition-colors"><i class="fa-solid fa-ellipsis"></i></button>
             </div>
             
@@ -101,7 +103,7 @@
             <div class="space-y-6">
                 <div>
                     <div class="flex justify-between text-sm font-bold text-gray-700 mb-2">
-                        <span>Completed (Received Blood)</span>
+                        <span>{{ __('ui.completed_received_blood') }}</span>
                         <span>{{ $completedPct }}%</span>
                     </div>
                     <div class="w-full bg-gray-100 rounded-full h-3">
@@ -111,7 +113,7 @@
                 
                 <div>
                     <div class="flex justify-between text-sm font-bold text-gray-700 mb-2">
-                        <span>Reserved (Donors on the way)</span>
+                        <span>{{ __('ui.reserved_donors_on_way') }}</span>
                         <span>{{ $reservedPct }}%</span>
                     </div>
                     <div class="w-full bg-gray-100 rounded-full h-3">
@@ -121,7 +123,7 @@
 
                 <div>
                     <div class="flex justify-between text-sm font-bold text-gray-700 mb-2">
-                        <span>Open (Urgently seeking donors)</span>
+                        <span>{{ __('ui.open_urgently_seeking_donors') }}</span>
                         <span>{{ $openPct }}%</span>
                     </div>
                     <div class="w-full bg-gray-100 rounded-full h-3">
@@ -131,7 +133,7 @@
 
                 <div>
                     <div class="flex justify-between text-sm font-bold text-gray-700 mb-2">
-                        <span>Expired / Cancelled</span>
+                        <span>{{ __('ui.expired_cancelled') }}</span>
                         <span>{{ $expiredCancelledPct }}%</span>
                     </div>
                     <div class="w-full bg-gray-100 rounded-full h-3">
@@ -143,7 +145,7 @@
 
         {{-- Popular Blood Types --}}
         <div class="bg-white rounded-[2rem] p-8 border border-gray-100 shadow-sm">
-            <h3 class="text-lg font-black text-gray-900 mb-6">Most Requested Blood Types</h3>
+            <h3 class="text-lg font-black text-gray-900 mb-6">{{ __('ui.most_requested_blood_types') }}</h3>
             
             <div class="space-y-4">
                 @forelse($popularBloodTypes as $type)
@@ -158,7 +160,7 @@
                 </div>
                 @empty
                 <div class="text-center py-6 text-sm font-bold text-gray-400 italic">
-                    No requests found in the system yet.
+                    {{ __('ui.no_requests_found_system') }}
                 </div>
                 @endforelse
             </div>

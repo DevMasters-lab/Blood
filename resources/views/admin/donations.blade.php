@@ -6,8 +6,8 @@
     {{-- Header & Filters --}}
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
         <div>
-            <h2 class="text-3xl font-black text-gray-900 tracking-tight">Donation Invoices</h2>
-            <p class="text-sm text-gray-500 mt-2 font-medium">Review and manage submitted donation records.</p>
+            <h2 class="text-2xl font-black text-gray-900 tracking-tight">{{ __('ui.donation_invoices') }}</h2>
+            <p class="text-sm text-gray-500 mt-2 font-medium">{{ __('ui.review_manage_donations') }}</p>
         </div>
         
         <div class="flex gap-3">
@@ -16,16 +16,16 @@
                 <i class="fa-solid fa-filter absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 z-10 pointer-events-none text-sm"></i>
                 <select name="status" onchange="this.form.submit()" class="bg-white border border-gray-200 text-gray-700 text-sm font-bold rounded-2xl pl-10 pr-10 py-3 outline-none focus:ring-2 focus:ring-[#D32F2F]/20 shadow-sm cursor-pointer appearance-none relative z-0 hover:border-gray-300 transition-colors">
                     <option value="all" {{ ($currentStatus ?? '') == 'all' ? 'selected' : '' }}>
-                        All ({{ $allCount ?? 0 }})
+                        {{ __('ui.all_with_count', ['count' => $allCount ?? 0]) }}
                     </option>
                     <option value="pending" {{ ($currentStatus ?? 'pending') == 'pending' ? 'selected' : '' }}>
-                        Pending ({{ $pendingCount ?? 0 }})
+                        {{ __('ui.pending_with_count', ['count' => $pendingCount ?? 0]) }}
                     </option>
                     <option value="approved" {{ ($currentStatus ?? '') == 'approved' ? 'selected' : '' }}>
-                        Approved ({{ $approvedCount ?? 0 }})
+                        {{ __('ui.approved_with_count', ['count' => $approvedCount ?? 0]) }}
                     </option>
                     <option value="rejected" {{ ($currentStatus ?? '') == 'rejected' ? 'selected' : '' }}>
-                        Rejected ({{ $rejectedCount ?? 0 }})
+                        {{ __('ui.rejected_with_count', ['count' => $rejectedCount ?? 0]) }}
                     </option>
                 </select>
                 <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none text-xs z-10"></i>
@@ -69,32 +69,32 @@
                             {{-- Hover Overlay for Images --}}
                             <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
                                 <span class="text-white text-xs font-bold uppercase tracking-widest bg-black/50 px-4 py-2 rounded-xl backdrop-blur-sm shadow-lg">
-                                    <i class="fa-solid fa-expand mr-1"></i> View Full Image
+                                    <i class="fa-solid fa-expand mr-1"></i> {{ __('ui.view_full_image') }}
                                 </span>
                             </div>
                         @else
                             {{-- Render PDF/Generic Icon --}}
                             <div class="absolute inset-0 group-hover:bg-black/5 transition-colors flex flex-col items-center justify-center">
                                 <i class="fa-solid fa-file-pdf text-5xl mb-3 text-[#D32F2F]/70 group-hover:text-[#D32F2F] transition-colors z-10"></i>
-                                <span class="text-xs font-bold uppercase tracking-widest group-hover:text-[#D32F2F] transition-colors z-10">View Document</span>
+                                <span class="text-xs font-bold uppercase tracking-widest group-hover:text-[#D32F2F] transition-colors z-10">{{ __('ui.view_document') }}</span>
                             </div>
                         @endif
                     </a>
                 @else
                     <div class="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
                         <i class="fa-solid fa-file-circle-xmark text-5xl mb-3 text-gray-300"></i>
-                        <span class="text-[10px] font-black uppercase tracking-widest">No Proof</span>
+                        <span class="text-[10px] font-black uppercase tracking-widest">{{ __('ui.no_proof') }}</span>
                     </div>
                 @endif
                 
                 {{-- Status Badge over image --}}
                 <div class="absolute top-4 left-4 z-20">
                     @if($invoice->status == 'active')
-                        <span class="bg-green-500 text-white text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-wider shadow-lg">Approved</span>
+                        <span class="bg-green-500 text-white text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-wider shadow-lg">{{ __('ui.approved') }}</span>
                     @elseif($invoice->status == 'rejected')
-                        <span class="bg-red-500 text-white text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-wider shadow-lg">Rejected</span>
+                        <span class="bg-red-500 text-white text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-wider shadow-lg">{{ __('ui.rejected') }}</span>
                     @else
-                        <span class="bg-orange-500 text-white text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-wider shadow-lg">Pending</span>
+                        <span class="bg-orange-500 text-white text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-wider shadow-lg">{{ __('ui.pending') }}</span>
                     @endif
                 </div>
             </div>
@@ -105,19 +105,19 @@
                 <div class="mb-6 pb-6 border-b border-gray-100">
                     <div class="flex justify-between items-start mb-2">
                         <p class="text-[10px] font-black text-[#D32F2F] uppercase tracking-widest">
-                            {{ $invoice->invoice_code ? 'Invoice #' . $invoice->invoice_code : 'Invoice #' . $invoice->id }}
+                            {{ $invoice->invoice_code ? __('ui.invoice') . ' #' . $invoice->invoice_code : __('ui.invoice') . ' #' . $invoice->id }}
                         </p>
                     </div>
                     <h3 class="text-xl font-black text-gray-900 leading-tight">{{ $invoice->blood_bank_name }}</h3>
                     <div class="flex flex-col gap-1 mt-2">
-                        <p class="text-xs font-bold text-gray-500">Donation Date: <strong class="text-gray-700">{{ \Carbon\Carbon::parse($invoice->donation_date)->format('d M Y') }}</strong></p>
-                        <p class="text-xs font-bold text-gray-500">Expiry Date: <strong class="text-red-600">{{ \Carbon\Carbon::parse($invoice->expiry_date)->format('d M Y') }}</strong></p>
+                        <p class="text-xs font-bold text-gray-500">{{ __('ui.donation_date') }}: <strong class="text-gray-700">{{ \Carbon\Carbon::parse($invoice->donation_date)->format('d M Y') }}</strong></p>
+                        <p class="text-xs font-bold text-gray-500">{{ __('ui.expiry_date') }}: <strong class="text-red-600">{{ \Carbon\Carbon::parse($invoice->expiry_date)->format('d M Y') }}</strong></p>
                     </div>
                 </div>
 
                 {{-- Donor Info --}}
                 <div class="mb-8 flex-grow">
-                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Donor Information</p>
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">{{ __('ui.donor_information') }}</p>
                     <div class="flex items-center gap-4 mb-4">
                         <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#D32F2F]/20 to-[#D32F2F]/5 flex items-center justify-center text-[#D32F2F] font-bold shrink-0 text-lg">
                             {{ substr($invoice->user->name, 0, 1) }}
@@ -145,21 +145,21 @@
                         <form action="{{ route('admin.donations.status', $invoice->id) }}" method="POST" class="flex-1">
                             @csrf
                             <input type="hidden" name="status" value="active">
-                            <button onclick="return confirm('Approve this donation?')" class="w-full bg-green-50 text-green-600 border border-green-200 hover:bg-green-600 hover:text-white hover:border-green-600 text-sm font-black py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-lg">
-                                <i class="fa-solid fa-check"></i> Approve
+                            <button data-confirm="{{ __('ui.confirm_approve_donation') }}" onclick="return confirm(this.dataset.confirm)" class="w-full bg-green-50 text-green-600 border border-green-200 hover:bg-green-600 hover:text-white hover:border-green-600 text-sm font-black py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-lg">
+                                <i class="fa-solid fa-check"></i> {{ __('ui.approve') }}
                             </button>
                         </form>
                         <form action="{{ route('admin.donations.status', $invoice->id) }}" method="POST" class="flex-1">
                             @csrf
                             <input type="hidden" name="status" value="rejected">
-                            <button onclick="return confirm('Reject this donation?')" class="w-full bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white hover:border-red-600 text-sm font-black py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-lg">
-                                <i class="fa-solid fa-xmark"></i> Reject
+                            <button data-confirm="{{ __('ui.confirm_reject_donation') }}" onclick="return confirm(this.dataset.confirm)" class="w-full bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white hover:border-red-600 text-sm font-black py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-lg">
+                                <i class="fa-solid fa-xmark"></i> {{ __('ui.reject') }}
                             </button>
                         </form>
                     </div>
                 @else
                     <div class="mt-auto pt-4 border-t border-gray-100">
-                        <p class="text-xs font-bold text-gray-400 text-center">Status is locked</p>
+                        <p class="text-xs font-bold text-gray-400 text-center">{{ __('ui.status_locked') }}</p>
                     </div>
                 @endif
             </div>
@@ -172,11 +172,11 @@
                     <i class="fa-solid fa-inbox"></i>
                 </div>
                 @if($currentStatus === 'all')
-                    <p class="text-lg font-black text-gray-900 mb-2">No invoices to review</p>
-                    <p class="text-sm font-medium text-gray-500">All donation invoices have been processed.</p>
+                    <p class="text-lg font-black text-gray-900 mb-2">{{ __('ui.no_invoices_review') }}</p>
+                    <p class="text-sm font-medium text-gray-500">{{ __('ui.all_invoices_processed') }}</p>
                 @else
-                    <p class="text-lg font-black text-gray-900 mb-2">No {{ $currentStatus }} invoices</p>
-                    <p class="text-sm font-medium text-gray-500">Try changing your filter to see other invoices.</p>
+                    <p class="text-lg font-black text-gray-900 mb-2">{{ __('ui.no_status_invoices', ['status' => $currentStatus]) }}</p>
+                    <p class="text-sm font-medium text-gray-500">{{ __('ui.try_changing_filter') }}</p>
                 @endif
             </div>
         </div>

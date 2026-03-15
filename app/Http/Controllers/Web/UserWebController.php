@@ -67,9 +67,7 @@ class UserWebController extends Controller
         // 1. Validate all fields
         $request->validate([
             'name' => 'required|string|max:150',
-            'email' => 'nullable|email|max:255|unique:users',
             'phone' => 'required|string|unique:users|regex:/^0[0-9]{8,9}$/',
-            'blood_type' => 'required|string', 
             'id_number' => 'required|string|max:50',
             'id_photo' => 'required|image|mimes:jpeg,png,jpg|max:5120', 
             'password' => 'required|string|min:6|confirmed',
@@ -77,15 +75,12 @@ class UserWebController extends Controller
             'phone.regex' => 'Please enter a phone number that starts with 0 and contains only numbers.',
             'password.confirmed' => 'Password confirmation does not match. Please re-enter your password.',
             'id_photo.required' => 'You must upload an official ID or Passport photo to register.',
-            'email.unique' => 'This email address is already registered.',
         ]);
 
         // 2. Create the User with Pending KYC Status
         $user = User::create([
             'name' => $request->name,
-            'email' => $request->email,
             'phone' => $request->phone,
-            'blood_type' => $request->blood_type, 
             'id_number' => $request->id_number,
             'kyc_status' => 'pending', 
             'password' => Hash::make($request->password),
@@ -229,7 +224,10 @@ class UserWebController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255|unique:users,email,' . $user->id,
             'phone' => 'required|string|max:20|unique:users,phone,' . $user->id,
+            'blood_type' => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-,All',
+            'current_password' => 'nullable|required_with:password|current_password',
             'password' => 'nullable|min:6|confirmed',
             'avatar' => 'nullable|image|max:2048', 
         ]);
@@ -244,7 +242,9 @@ class UserWebController extends Controller
         }
 
         $user->name = $request->name;
+        $user->email = $request->email;
         $user->phone = $request->phone;
+        $user->blood_type = $request->blood_type;
 
         if ($request->filled('password')) {
             $user->password = Hash::make($request->password);

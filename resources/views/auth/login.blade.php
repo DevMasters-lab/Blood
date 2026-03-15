@@ -1,9 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ app()->getLocale() }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Master Control | BloodShare Kingdom</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
@@ -31,9 +34,11 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
+
+        .font-km { font-family: 'Kantumruy Pro', sans-serif !important; }
     </style>
 </head>
-<body class="bg-[#050505] h-screen flex items-center justify-center overflow-hidden font-sans selection:bg-red-500 selection:text-white">
+<body class="bg-[#050505] h-screen flex items-center justify-center overflow-hidden font-sans selection:bg-red-500 selection:text-white {{ app()->getLocale() === 'km' ? 'font-km' : '' }}">
 
     {{-- CYBERNETIC BACKGROUND --}}
     <div class="absolute inset-0 circuit-bg pointer-events-none opacity-40"></div>
@@ -63,7 +68,7 @@
                 </h1>
                 <p class="text-[9px] font-black text-gray-500 tracking-[0.6em] uppercase mt-4 flex items-center justify-center gap-2">
                     <span class="w-10 h-[1px] bg-gray-800"></span>
-                    Secure Management Terminal
+                    {{ __('ui.secure_management_terminal') }}
                     <span class="w-10 h-[1px] bg-gray-800"></span>
                 </p>
             </div>
@@ -76,13 +81,13 @@
             
             <div class="mb-10 flex justify-between items-end">
                 <div>
-                    <h2 class="text-2xl font-black text-white">Authorization</h2>
-                    <p class="text-xs font-bold text-gray-500 mt-1 uppercase tracking-wider">Level 5 Clearance Required</p>
+                    <h2 class="text-2xl font-black text-white">{{ __('ui.authorization') }}</h2>
+                    <p class="text-xs font-bold text-gray-500 mt-1 uppercase tracking-wider">{{ __('ui.level5_clearance') }}</p>
                 </div>
                 <div class="text-right">
                     <div class="text-[10px] font-bold text-green-500 flex items-center justify-end gap-1.5 bg-green-500/5 px-2 py-1 rounded-md border border-green-500/20">
                         <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-ping"></span>
-                        ENCRYPTED
+                        {{ __('ui.encrypted') }}
                     </div>
                 </div>
             </div>
@@ -90,7 +95,7 @@
             @if ($errors->any())
                 <div class="mb-8 p-4 bg-red-950/30 border border-red-500/30 rounded-2xl flex items-center gap-4 animate-bounce">
                     <i class="fa-solid fa-lock text-red-500"></i>
-                    <span class="text-[10px] font-black text-red-500 uppercase">Warning: Unidentified Login Attempt</span>
+                    <span class="text-[10px] font-black text-red-500 uppercase">{{ __('ui.warning_unidentified_login') }}</span>
                 </div>
             @endif
 
@@ -99,7 +104,7 @@
                 
                 {{-- PHONE INPUT --}}
                 <div class="relative group">
-                    <label class="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-4 mb-2 block">Admin Identifier</label>
+                    <label class="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-4 mb-2 block">{{ __('ui.admin_identifier') }}</label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
                             <i class="fa-solid fa-fingerprint text-gray-600 group-focus-within:text-red-500 transition-colors"></i>
@@ -112,7 +117,7 @@
 
                 {{-- PASSWORD INPUT --}}
                 <div class="relative group">
-                    <label class="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-4 mb-2 block">Security Token</label>
+                    <label class="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-4 mb-2 block">{{ __('ui.security_token') }}</label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
                             <i class="fa-solid fa-user-lock text-gray-600 group-focus-within:text-red-500 transition-colors"></i>
@@ -129,7 +134,7 @@
                     <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-[-20deg] animate-[shimmer_2s_infinite]" style="background-size: 200% 100%;"></div>
                     
                     <span class="relative z-10 flex items-center justify-center gap-3">
-                        AUTHORIZE ACCESS
+                        {{ __('ui.authorize_access') }}
                         <i class="fa-solid fa-satellite-dish animate-pulse"></i>
                     </span>
                 </button>
@@ -138,7 +143,7 @@
             <div class="mt-12 text-center">
                 <a href="/" class="group text-[10px] font-black text-gray-600 hover:text-white transition-all uppercase tracking-widest flex items-center justify-center gap-2">
                     <i class="fa-solid fa-power-off group-hover:text-red-500"></i>
-                    Go to Homepage
+                    {{ __('ui.go_to_homepage') }}
                 </a>
             </div>
         </div>

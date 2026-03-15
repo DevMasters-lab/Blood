@@ -6,8 +6,8 @@
         {{-- Header Section --}}
         <div class="flex justify-between items-center mb-8">
             <div>
-                <h2 class="text-3xl font-black text-gray-900 tracking-tight">Account Settings</h2>
-                <p class="text-sm text-gray-500 mt-1">Update your admin profile, contact details, and password.</p>
+                <h2 class="text-2xl font-black text-gray-900 tracking-tight">{{ __('ui.account_settings') }}</h2>
+                <p class="text-sm text-gray-500 mt-1">{{ __('ui.update_admin_profile_desc') }}</p>
             </div>
         </div>
 
@@ -22,7 +22,7 @@
             <div class="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-2xl mb-8 shadow-sm">
                 <div class="flex items-center mb-2">
                     <i class="fa-solid fa-triangle-exclamation text-xl mr-3 text-red-500"></i>
-                    <span class="font-bold text-lg">Oops! Please check your inputs.</span>
+                    <span class="font-bold text-lg">{{ __('ui.oops_check_inputs') }}</span>
                 </div>
                 <ul class="ml-9 space-y-1 text-sm font-medium">
                     @foreach ($errors->all() as $error)
@@ -52,30 +52,30 @@
                         </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-gray-900 mb-2">Profile Photo</label>
+                        <label class="block text-sm font-bold text-gray-900 mb-2">{{ __('ui.profile_photo') }}</label>
                         <input type="file" name="avatar" class="text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-red-50 file:text-red-600 hover:file:bg-red-100 transition-colors cursor-pointer">
-                        <p class="text-xs text-gray-400 mt-2 font-medium"><i class="fa-solid fa-circle-info mr-1"></i> JPG or PNG. Max 2MB.</p>
+                        <p class="text-xs text-gray-400 mt-2 font-medium"><i class="fa-solid fa-circle-info mr-1"></i> {{ __('ui.jpg_png_max') }}</p>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {{-- Name --}}
                     <div>
-                        <label class="block text-sm font-bold text-gray-900 mb-2">Full Name</label>
+                        <label class="block text-sm font-bold text-gray-900 mb-2">{{ __('ui.full_name') }}</label>
                         <input type="text" name="name" value="{{ old('name', $user->name) }}" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all font-medium text-gray-800">
                     </div>
 
                     {{-- Email --}}
                     <div>
-                        <label class="block text-sm font-bold text-gray-900 mb-2">Email Address</label>
+                        <label class="block text-sm font-bold text-gray-900 mb-2">{{ __('ui.email_address') }}</label>
                         <input type="email" name="email" value="{{ old('email', $user->email) }}" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all font-medium text-gray-800">
                     </div>
 
                     {{-- Phone --}}
                     <div>
-                        <label class="block text-sm font-bold text-gray-900 mb-2">Phone Number</label>
+                        <label class="block text-sm font-bold text-gray-900 mb-2">{{ __('ui.phone_number') }}</label>
                         <input type="text" name="phone" value="{{ old('phone', $user->phone) }}" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all font-medium text-gray-800">
-                        <p class="text-[11px] text-gray-500 mt-2 font-medium"><i class="fa-solid fa-lock text-gray-400 mr-1"></i> This number is used for internal admin contact when coordination is needed.</p>
+                        <p class="text-[11px] text-gray-500 mt-2 font-medium"><i class="fa-solid fa-lock text-gray-400 mr-1"></i> {{ __('ui.admin_phone_note') }}</p>
                     </div>
 
                     {{-- Spacer to push passwords to next row cleanly --}}
@@ -84,20 +84,26 @@
                     {{-- Password Section Divider --}}
                     <div class="md:col-span-2 mt-4 pt-8 border-t border-gray-100">
                         <h4 class="text-lg font-black text-gray-900 flex items-center">
-                            <i class="fa-solid fa-shield-halved text-red-500 mr-2"></i> Security
+                            <i class="fa-solid fa-shield-halved text-red-500 mr-2"></i> {{ __('ui.security') }}
                         </h4>
-                        <p class="text-sm text-gray-500 mt-1 mb-6">Change your password here. Leave it blank if you want to keep your current password.</p>
+                        <p class="text-sm text-gray-500 mt-1 mb-6">{{ __('ui.change_password_note') }}</p>
+                    </div>
+
+                    {{-- Current Password (required only when setting new password) --}}
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-bold text-gray-900 mb-2">{{ __('ui.current_password') }}</label>
+                        <input type="password" name="current_password" placeholder="••••••••" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all font-medium text-gray-800">
                     </div>
 
                     {{-- New Password --}}
                     <div>
-                        <label class="block text-sm font-bold text-gray-900 mb-2">New Password</label>
+                        <label class="block text-sm font-bold text-gray-900 mb-2">{{ __('ui.new_password') }}</label>
                         <input type="password" name="password" placeholder="••••••••" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all font-medium text-gray-800">
                     </div>
 
                     {{-- Confirm Password --}}
                     <div>
-                        <label class="block text-sm font-bold text-gray-900 mb-2">Confirm New Password</label>
+                        <label class="block text-sm font-bold text-gray-900 mb-2">{{ __('ui.confirm_new_password') }}</label>
                         <input type="password" name="password_confirmation" placeholder="••••••••" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all font-medium text-gray-800">
                     </div>
                 </div>
@@ -105,7 +111,7 @@
                 {{-- Submit Actions --}}
                 <div class="mt-10 pt-6 border-t border-gray-100 flex justify-end">
                     <button type="submit" class="bg-red-600 text-white font-bold py-3.5 px-8 rounded-xl shadow-lg shadow-red-200 hover:bg-red-700 transition-all transform hover:-translate-y-0.5 flex items-center gap-2">
-                        <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                        <i class="fa-solid fa-floppy-disk"></i> {{ __('ui.save_changes') }}
                     </button>
                 </div>
             </form>

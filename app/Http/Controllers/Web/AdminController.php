@@ -192,11 +192,35 @@ class AdminController extends Controller
 
     public function updateSettings(Request $request)
     {
+        $request->validate([
+            'hero_banner_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
+        ]);
+
         $data = $request->except(['_token']);
 
         // Handle the Toggle Switches
         $data['maintenance_mode'] = $request->has('maintenance_mode') ? '1' : '0';
         $data['allow_guest_requests'] = $request->has('allow_guest_requests') ? '1' : '0';
+
+        // Keep existing banner unless a new file is uploaded.
+        unset($data['hero_banner_image']);
+        $oldBanner = Setting::where('key', 'hero_banner_image')->value('value');
+        $shouldRemoveBanner = $request->has('remove_hero_banner');
+
+        if ($request->hasFile('hero_banner_image')) {
+            if (!empty($oldBanner)) {
+                Storage::disk('public')->delete($oldBanner);
+            }
+
+            $data['hero_banner_image'] = $request->file('hero_banner_image')->store('settings/banners', 'public');
+        } elseif ($shouldRemoveBanner) {
+            if (!empty($oldBanner)) {
+                Storage::disk('public')->delete($oldBanner);
+            }
+
+            // Persist an empty value to disable the custom banner on homepage.
+            $data['hero_banner_image'] = '';
+        }
 
         foreach ($data as $key => $value) {
             Setting::updateOrCreate(
@@ -206,24 +230,6 @@ class AdminController extends Controller
         }
 
         return redirect()->back()->with('success', 'Platform settings updated successfully.');
-    }
-
-    public function localization()
-    {
-        return view('admin.localization');
-    }
-
-    public function updateLocalization(Request $request)
-    {
-        $request->validate([
-            'default_language' => 'required|string',
-            'timezone' => 'required|string',
-            'date_format' => 'required|string',
-            'time_format' => 'required|string',
-            'phone_code' => 'required|string',
-        ]);
-
-        return redirect()->back()->with('success', 'Localization settings saved successfully!');
     }
 
     // =========================================================================
@@ -271,19 +277,47 @@ class AdminController extends Controller
         return back()->with('error', $userName . ' was rejected and deleted. They must register again with valid documents.');
     }
 
-    public function reports()
+    public function reports(Request $request)
     {
+        $allowedRanges = ['today', '7days', '30days', 'all'];
+        $selectedRange = $request->query('range', '7days');
+        if (!in_array($selectedRange, $allowedRanges, true)) {
+            $selectedRange = '7days';
+        }
+
+        $fromDate = null;
+        if ($selectedRange === 'today') {
+            $fromDate = Carbon::today();
+        } elseif ($selectedRange === '7days') {
+            $fromDate = Carbon::now()->subDays(6)->startOfDay();
+        } elseif ($selectedRange === '30days') {
+            $fromDate = Carbon::now()->subDays(29)->startOfDay();
+        }
+
+        $applyDateFilter = function ($query) use ($fromDate) {
+            if ($fromDate !== null) {
+                $query->where('created_at', '>=', $fromDate);
+            }
+
+            return $query;
+        };
+
         // 1. Get Total Counts
-        $totalRequests = \App\Models\BloodRequest::count();
-        $completedRequests = \App\Models\BloodRequest::where('status', 'completed')->count();
-        $expiredRequests = \App\Models\BloodRequest::where('status', 'expired')->count();
-        $cancelledRequests = \App\Models\BloodRequest::where('status', 'cancelled')->count();
-        $reservedRequests = \App\Models\BloodRequest::where('status', 'reserved')->count();
-        $openRequests = \App\Models\BloodRequest::where('status', 'open')->count();
+        $requestsQuery = $applyDateFilter(BloodRequest::query());
+        $totalRequests = (clone $requestsQuery)->count();
+        $completedRequests = (clone $requestsQuery)->where('status', 'completed')->count();
+        $expiredRequests = (clone $requestsQuery)->where('status', 'expired')->count();
+        $cancelledRequests = (clone $requestsQuery)->where('status', 'cancelled')->count();
+        $reservedRequests = (clone $requestsQuery)->where('status', 'reserved')->count();
+        $openRequests = (clone $requestsQuery)->where('status', 'open')->count();
 
         // 2. Count Verified Donations (Approved Invoices + Verified Responses)
-        $verifiedInvoices = \App\Models\DonationInvoice::whereIn('status', ['active', 'used', 'expired'])->count();
-        $verifiedResponses = \App\Models\RequestResponse::where('proof_status', 'verified')->count();
+        $verifiedInvoices = $applyDateFilter(DonationInvoice::query())
+            ->whereIn('status', ['active', 'used', 'expired'])
+            ->count();
+        $verifiedResponses = $applyDateFilter(\App\Models\RequestResponse::query())
+            ->where('proof_status', 'verified')
+            ->count();
         $verifiedDonations = $verifiedInvoices + $verifiedResponses;
 
         // 3. Calculate Percentages (Preventing division by zero)
@@ -293,7 +327,8 @@ class AdminController extends Controller
         $expiredCancelledPct = $totalRequests > 0 ? round((($expiredRequests + $cancelledRequests) / $totalRequests) * 100) : 0;
 
         // 4. Get Most Popular Blood Types (Top 4)
-        $popularBloodTypes = \App\Models\BloodRequest::select('blood_type', \Illuminate\Support\Facades\DB::raw('count(*) as count'))
+        $popularBloodTypes = $applyDateFilter(BloodRequest::query())
+            ->select('blood_type', \Illuminate\Support\Facades\DB::raw('count(*) as count'))
             ->groupBy('blood_type')
             ->orderByDesc('count')
             ->take(4)
@@ -316,7 +351,7 @@ class AdminController extends Controller
 
         return view('admin.reports', compact(
             'totalRequests', 'completedRequests', 'expiredRequests', 'verifiedDonations',
-            'completedPct', 'reservedPct', 'openPct', 'expiredCancelledPct', 'popularBloodTypes'
+            'completedPct', 'reservedPct', 'openPct', 'expiredCancelledPct', 'popularBloodTypes', 'selectedRange'
         ));
     }
 
@@ -338,10 +373,10 @@ class AdminController extends Controller
             'email' => 'required|email|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:20',
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'current_password' => 'nullable|required_with:password|current_password',
             'password' => 'nullable|min:6|confirmed',
         ]);
 
-        // Handle Avatar Upload
         if ($request->hasFile('avatar')) {
             if ($user->avatar) {
                 Storage::disk('public')->delete($user->avatar);
@@ -349,12 +384,10 @@ class AdminController extends Controller
             $user->avatar = $request->file('avatar')->store('avatars', 'public');
         }
 
-        // Update Base Details
         $user->name = $request->name;
         $user->email = $request->email;
         $user->phone = $request->phone;
 
-        // Update Password if provided
         if ($request->filled('password')) {
             $user->password = \Illuminate\Support\Facades\Hash::make($request->password);
         }
