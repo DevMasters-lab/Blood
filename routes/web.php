@@ -61,6 +61,9 @@ Route::middleware('guest')->group(function () {
     
     Route::get('/login', [UserWebController::class, 'showLoginForm'])->name('user.login');
     Route::post('/login', [UserWebController::class, 'login']);
+    Route::get('/auth/google/redirect', [UserWebController::class, 'redirectToGoogle'])->name('auth.google.redirect');
+    Route::get('/auth/google/callback', [UserWebController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+    Route::post('/auth/telegram/callback', [UserWebController::class, 'handleTelegramCallback'])->name('auth.telegram.callback');
 });
 
 // --- ADMIN LOGIN (Separate Controller) ---
@@ -100,6 +103,9 @@ Route::middleware(['auth'])->prefix('user')->group(function () {
     Route::get('/requests/create', [UserWebController::class, 'showCreateRequestForm'])->name('user.requests.create');
     Route::post('/requests', [UserWebController::class, 'storeRequest'])->name('user.requests.store');
     Route::put('/requests/{id}/complete', [UserWebController::class, 'markRequestAsComplete'])->name('user.requests.complete');
+
+    // Blood Requested History
+    Route::get('/requests/history', [UserWebController::class, 'requestHistory'])->name('user.requests.history');
 });
 
 
@@ -126,6 +132,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
 
     // Request Management
     Route::get('/requests', [AdminController::class, 'requests'])->name('admin.requests');
+    Route::get('/requests/history', [AdminController::class, 'requestHistory'])->name('admin.requests.history');
     Route::post('/requests/{id}/status', [AdminController::class, 'updateRequestStatus'])->name('admin.requests.status');
     Route::delete('/requests/{id}', [AdminController::class, 'deleteRequest'])->name('admin.requests.delete');
 
@@ -141,7 +148,9 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     // User Management
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
     Route::post('/users/{id}/verify', [AdminController::class, 'verifyUser'])->name('admin.users.verify');
+    Route::get('/users/{id}', [AdminController::class, 'showUser'])->name('admin.users.show');
     Route::post('/users/{id}/toggle', [AdminController::class, 'toggleBlockUser'])->name('admin.users.toggle'); // Block/Unblock
+    Route::post('/users/{id}/reset-password', [AdminController::class, 'resetUserPassword'])->name('admin.users.reset_password');
     Route::delete('/users/{id}', [AdminController::class, 'deleteUser'])->name('admin.users.delete'); // Delete
     Route::post('/users/{id}/update-blood', [AdminController::class, 'updateUserBloodType'])->name('admin.users.update_blood');
 

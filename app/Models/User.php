@@ -19,7 +19,9 @@ class User extends Authenticatable
         'name',
         'phone',
         'email',
+        'avatar',
         'password',
+        'usertype',
         'blood_type',
         'id_number',
         'kyc_status',
@@ -27,7 +29,11 @@ class User extends Authenticatable
         'kyc_verified_at',
         'kyc_verified_by_admin_id',
         'status',
-        'last_login_at'
+        'last_login_at',
+        'google_id',
+        'telegram_id',
+        'telegram_username',
+        'auth_provider'
     ];
 
     /**

@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Models\Setting;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str; // <-- ADDED: Required for generating Invoice Codes
@@ -39,11 +40,23 @@ class AdminController extends Controller
     // =========================================================================
     // 2. USER MANAGEMENT (Verify, Block, Delete)
     // =========================================================================
-    public function users()
+    public function users(Request $request)
     {
-        // Get all users, newest first, 10 per page
-        $users = User::where('usertype', 'user')->latest()->paginate(10);
-        return view('admin.users', compact('users'));
+        $currentStatus = $request->get('status', 'all');
+
+        $allCount = User::where('usertype', 'user')->count();
+        $pendingCount = User::where('usertype', 'user')->where('kyc_status', 'pending')->count();
+        $verifiedCount = User::where('usertype', 'user')->where('kyc_status', 'verified')->count();
+
+        $query = User::where('usertype', 'user');
+
+        if (in_array($currentStatus, ['pending', 'verified'], true)) {
+            $query->where('kyc_status', $currentStatus);
+        }
+
+        $users = $query->latest()->paginate(10)->withQueryString();
+
+        return view('admin.users', compact('users', 'currentStatus', 'allCount', 'pendingCount', 'verifiedCount'));
     }
 
     public function toggleBlockUser($id) 
@@ -71,12 +84,27 @@ class AdminController extends Controller
         return back()->with('success', 'User Verified successfully!');
     }
 
+    public function showUser($id)
+    {
+        $user = User::where('usertype', 'user')->findOrFail($id);
+        return view('admin.user-view', compact('user'));
+    }
+
+    public function resetUserPassword($id)
+    {
+        $user = User::where('usertype', 'user')->findOrFail($id);
+        $user->password = Hash::make('123456');
+        $user->save();
+
+        return back()->with('success', 'Password reset successfully. New password is 123456.');
+    }
+
     public function deleteUser($id)
     {
         $user = User::findOrFail($id);
         
         // Security: Prevent deleting yourself
-        if ($user->id == auth()->id()) {
+        if ($user->id == Auth::id()) {
             return back()->with('error', 'You cannot delete your own admin account.');
         }
         
@@ -120,6 +148,46 @@ class AdminController extends Controller
         $request = BloodRequest::findOrFail($id);
         $request->delete();
         return back()->with('success', 'Request deleted successfully.');
+    }
+
+    public function requestHistory(Request $request)
+    {
+        $query = BloodRequest::with('requester')->latest();
+
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('blood_type')) {
+            $query->where('blood_type', $request->blood_type);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('hospital_name', 'like', "%{$search}%")
+                  ->orWhere('patient_name', 'like', "%{$search}%")
+                  ->orWhereHas('requester', fn($u) => $u->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        if ($request->filled('from_date')) {
+            $query->whereDate('created_at', '>=', $request->from_date);
+        }
+        if ($request->filled('to_date')) {
+            $query->whereDate('created_at', '<=', $request->to_date);
+        }
+
+        $requests = $query->paginate(15)->withQueryString();
+
+        $stats = [
+            'total'     => BloodRequest::count(),
+            'open'      => BloodRequest::where('status', 'open')->count(),
+            'completed' => BloodRequest::where('status', 'completed')->count(),
+            'cancelled' => BloodRequest::whereIn('status', ['cancelled', 'expired'])->count(),
+        ];
+
+        return view('admin.request_history', compact('requests', 'stats'));
     }
 
     // =========================================================================
@@ -360,13 +428,15 @@ class AdminController extends Controller
     // =========================================================================
     public function profile()
     {
-        $user = auth()->user();
+        /** @var User $user */
+        $user = Auth::user();
         return view('admin.profile', compact('user'));
     }
 
     public function updateProfile(Request $request)
     {
-        $user = auth()->user();
+        /** @var User $user */
+        $user = Auth::user();
 
         $request->validate([
             'name' => 'required|string|max:255',

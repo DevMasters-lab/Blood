@@ -62,6 +62,12 @@
                             <span class="ml-4 font-bold text-sm">{{ __('ui.blood_requests') }}</span>
                         </a>
 
+                        {{-- Blood Requested History --}}
+                        <a href="{{ route('admin.requests.history') }}" class="flex items-center px-5 py-4 rounded-2xl {{ request()->routeIs('admin.requests.history') ? 'bg-[#D32F2F] text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                            <i class="fa-solid fa-clock-rotate-left w-6 text-center"></i>
+                            <span class="ml-4 font-bold text-sm">Requested History</span>
+                        </a>
+
                         {{-- 4. Verify Invoices --}}
                         <a href="{{ route('admin.donations') }}" class="flex items-center px-5 py-4 rounded-2xl {{ request()->routeIs('admin.donations') ? 'bg-[#D32F2F] text-white shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
                             <i class="fa-solid fa-file-invoice w-6 text-center"></i>

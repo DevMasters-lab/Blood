@@ -75,6 +75,9 @@
                             <a href="{{ route('user.dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 font-medium transition">
                                 <i class="fa-solid fa-house mr-2 w-4 text-center"></i> {{ __('ui.my_dashboard') }}
                             </a>
+                            <a href="{{ route('user.requests.history') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 font-medium transition">
+                                <i class="fa-solid fa-clock-rotate-left mr-2 w-4 text-center"></i> Request History
+                            </a>
                             <a href="{{ route('user.wallet') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 font-medium transition">
                                 <i class="fa-solid fa-wallet mr-2 w-4 text-center"></i> {{ __('ui.my_wallet') }}
                             </a>

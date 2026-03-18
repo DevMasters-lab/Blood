@@ -32,7 +32,7 @@
                 <thead>
                     <tr class="border-b border-gray-100 bg-gray-50/50">
                         <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ __('ui.user_details') }}</th>
-                        <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ __('ui.email') }}</th>
+                        <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ __('ui.phone_number') }}</th>
                         <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ __('ui.id_passport_info') }}</th>
                         <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ __('ui.document_proof') }}</th>
                         <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">{{ __('ui.actions') }}</th>
@@ -48,12 +48,11 @@
                                     </div>
                                     <div>
                                         <p class="text-sm font-black text-gray-900">{{ $user->name }}</p>
-                                        <p class="text-xs font-bold text-gray-500 mt-0.5">{{ $user->phone }}</p>
                                     </div>
                                 </div>
                             </td>
                             <td class="px-8 py-6">
-                                <p class="text-sm font-bold text-blue-600">{{ $user->email ?? __('ui.not_available') }}</p>
+                                <p class="text-sm font-bold text-black">{{ $user->phone ?? __('ui.not_available') }}</p>
                             </td>
                             <td class="px-8 py-6">
                                 <p class="text-sm font-black text-gray-900">{{ $user->id_number }}</p>

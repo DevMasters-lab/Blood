@@ -11,6 +11,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\GoogleProvider;
+use Throwable;
 
 class UserWebController extends Controller
 {
@@ -21,6 +25,115 @@ class UserWebController extends Controller
 
     public function showRegisterForm() {
         return view('auth.register');
+    }
+
+    public function redirectToGoogle()
+    {
+        if (! config('services.google.client_id') || ! config('services.google.client_secret') || ! config('services.google.redirect')) {
+            return redirect()->route('user.login')->withErrors([
+                'identifier' => 'Google sign-in is not configured yet. Add your Google OAuth credentials first.',
+            ]);
+        }
+
+        /** @var GoogleProvider $googleDriver */
+        $googleDriver = Socialite::driver('google');
+
+        return $googleDriver->redirect();
+    }
+
+    public function handleGoogleCallback(Request $request)
+    {
+        try {
+            /** @var GoogleProvider $googleDriver */
+            $googleDriver = Socialite::driver('google');
+
+            $googleUser = $googleDriver->user();
+        } catch (Throwable $exception) {
+            return redirect()->route('user.login')->withErrors([
+                'identifier' => 'Google sign-in failed. Please try again.',
+            ]);
+        }
+
+        $email = $googleUser->getEmail();
+
+        $user = User::where('google_id', $googleUser->getId())
+            ->when($email, fn ($query) => $query->orWhere('email', $email))
+            ->first();
+
+        if (! $user) {
+            $user = User::create([
+                'name' => $googleUser->getName() ?: $googleUser->getNickname() ?: 'Google User',
+                'email' => $email,
+                'password' => Str::password(32),
+                'usertype' => 'user',
+                'kyc_status' => 'verified',
+                'status' => 'active',
+                'google_id' => $googleUser->getId(),
+                'auth_provider' => 'google',
+            ]);
+        } else {
+            $user->forceFill([
+                'name' => $user->name ?: ($googleUser->getName() ?: $googleUser->getNickname() ?: 'Google User'),
+                'email' => $user->email ?: $email,
+                'google_id' => $googleUser->getId(),
+                'auth_provider' => $user->auth_provider ?: 'google',
+            ])->save();
+        }
+
+        return $this->completeLogin($request, $user);
+    }
+
+    public function handleTelegramCallback(Request $request)
+    {
+        if (! config('services.telegram.bot_name') || ! config('services.telegram.bot_token')) {
+            return redirect()->route('user.login')->withErrors([
+                'identifier' => 'Telegram sign-in is not configured yet. Add your Telegram bot settings first.',
+            ]);
+        }
+
+        $payload = $request->validate([
+            'id' => 'required|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'nullable|string|max:255',
+            'username' => 'nullable|string|max:255',
+            'photo_url' => 'nullable|url|max:2048',
+            'auth_date' => 'required|integer',
+            'hash' => 'required|string',
+        ]);
+
+        if (! $this->isValidTelegramLogin($payload)) {
+            return redirect()->route('user.login')->withErrors([
+                'identifier' => 'Telegram sign-in could not be verified. Please try again.',
+            ]);
+        }
+
+        $name = trim(implode(' ', array_filter([
+            $payload['first_name'] ?? null,
+            $payload['last_name'] ?? null,
+        ]))) ?: ($payload['username'] ?? 'Telegram User');
+
+        $user = User::where('telegram_id', $payload['id'])->first();
+
+        if (! $user) {
+            $user = User::create([
+                'name' => $name,
+                'password' => Str::password(32),
+                'usertype' => 'user',
+                'kyc_status' => 'verified',
+                'status' => 'active',
+                'telegram_id' => $payload['id'],
+                'telegram_username' => $payload['username'] ?? null,
+                'auth_provider' => 'telegram',
+            ]);
+        } else {
+            $user->forceFill([
+                'name' => $user->name ?: $name,
+                'telegram_username' => $payload['username'] ?? $user->telegram_username,
+                'auth_provider' => $user->auth_provider ?: 'telegram',
+            ])->save();
+        }
+
+        return $this->completeLogin($request, $user);
     }
 
     // --- Auth Logic ---
@@ -37,27 +150,8 @@ class UserWebController extends Controller
                      ->orWhere('email', $identifier)
                      ->first();
 
-        if ($user && Hash::check($request->password, $user->password)) {
-            
-            // 1. Prevent Admins from entering the standard User Portal
-            if ($user->usertype === 'admin') {
-                return back()->withErrors(['identifier' => 'Administrators must login via the Admin Portal.']);
-            }
-
-            // 2. Block Pending Users
-            if ($user->kyc_status === 'pending') {
-                return back()->withErrors(['identifier' => 'Your account is under review by an Admin. You cannot log in yet.']);
-            }
-
-            // 3. Block Rejected Users
-            if ($user->kyc_status === 'rejected') {
-                return back()->withErrors(['identifier' => 'Your ID verification was rejected. Please register a new account.']);
-            }
-            
-            // If they are Verified, let them in!
-            Auth::loginUsingId($user->id);
-            $request->session()->regenerate();
-            return redirect()->route('user.dashboard');
+        if ($user && $user->password && Hash::check($request->password, $user->password)) {
+            return $this->completeLogin($request, $user);
         }
 
         return back()->withErrors(['identifier' => 'Invalid phone/email or password.']);
@@ -116,7 +210,7 @@ class UserWebController extends Controller
 
     public function dashboard()
     {
-        $userId = auth()->id();
+        $userId = Auth::id();
 
         $myRequests = \App\Models\BloodRequest::where('requester_id', $userId)
             ->latest()
@@ -214,18 +308,54 @@ class UserWebController extends Controller
 
         return back()->with('success', 'Great! Request marked as completed.');
     }
+
+    public function requestHistory(Request $request)
+    {
+        $query = BloodRequest::where('requester_id', Auth::id())->latest();
+
+        // Filter by status
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        // Filter by blood type
+        if ($request->filled('blood_type')) {
+            $query->where('blood_type', $request->blood_type);
+        }
+
+        // Filter by date range
+        if ($request->filled('from_date')) {
+            $query->whereDate('needed_date', '>=', $request->from_date);
+        }
+        if ($request->filled('to_date')) {
+            $query->whereDate('needed_date', '<=', $request->to_date);
+        }
+
+        $requests = $query->paginate(10)->withQueryString();
+
+        // Stats for summary cards
+        $stats = [
+            'total'     => BloodRequest::where('requester_id', Auth::id())->count(),
+            'open'      => BloodRequest::where('requester_id', Auth::id())->where('status', 'open')->count(),
+            'completed' => BloodRequest::where('requester_id', Auth::id())->where('status', 'completed')->count(),
+            'cancelled' => BloodRequest::where('requester_id', Auth::id())->whereIn('status', ['cancelled', 'expired'])->count(),
+        ];
+
+        return view('user.request_history', compact('requests', 'stats'));
+    }
     
     public function showProfile() {
         return view('user.profile', ['user' => Auth::user()]);
     }
     
     public function updateProfile(Request $request) {
+        /** @var User $user */
         $user = Auth::user();
 
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|max:255|unique:users,email,' . $user->id,
-            'phone' => 'required|string|max:20|unique:users,phone,' . $user->id,
+            'phone' => 'nullable|string|max:20|unique:users,phone,' . $user->id,
             'blood_type' => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-,All',
             'current_password' => 'nullable|required_with:password|current_password',
             'password' => 'nullable|min:6|confirmed',
@@ -257,11 +387,69 @@ class UserWebController extends Controller
     
     public function certificate($id)
     {
-        $donation = DonationInvoice::where('user_id', auth()->id())
+        $donation = DonationInvoice::where('user_id', Auth::id())
                     ->where('id', $id)
                     ->where('status', 'active')
                     ->firstOrFail();
 
         return view('user.certificate', compact('donation'));
+    }
+
+    private function completeLogin(Request $request, User $user)
+    {
+        if ($user->usertype === 'admin') {
+            return redirect()->route('user.login')->withErrors([
+                'identifier' => 'Administrators must login via the Admin Portal.',
+            ]);
+        }
+
+        if ($user->status === 'blocked') {
+            return redirect()->route('user.login')->withErrors([
+                'identifier' => 'Your account is currently blocked. Please contact support.',
+            ]);
+        }
+
+        if ($user->kyc_status === 'pending') {
+            return redirect()->route('user.login')->withErrors([
+                'identifier' => 'Your account is under review by an Admin. You cannot log in yet.',
+            ]);
+        }
+
+        if ($user->kyc_status === 'rejected') {
+            return redirect()->route('user.login')->withErrors([
+                'identifier' => 'Your ID verification was rejected. Please register a new account.',
+            ]);
+        }
+
+        Auth::loginUsingId($user->id);
+        $request->session()->regenerate();
+
+        $user->forceFill([
+            'last_login_at' => now(),
+        ])->save();
+
+        return redirect()->route('user.dashboard');
+    }
+
+    private function isValidTelegramLogin(array $payload): bool
+    {
+        $providedHash = $payload['hash'];
+        unset($payload['hash']);
+
+        $payload = array_filter($payload, fn ($value) => $value !== null && $value !== '');
+        ksort($payload);
+
+        $dataCheckString = collect($payload)
+            ->map(fn ($value, $key) => $key.'='.$value)
+            ->implode("\n");
+
+        $secretKey = hash('sha256', config('services.telegram.bot_token'), true);
+        $calculatedHash = hash_hmac('sha256', $dataCheckString, $secretKey);
+
+        if (! hash_equals($calculatedHash, $providedHash)) {
+            return false;
+        }
+
+        return (int) ($payload['auth_date'] ?? 0) >= now()->subMinutes(10)->timestamp;
     }
 }

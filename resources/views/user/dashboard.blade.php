@@ -83,8 +83,11 @@
                 @endforelse
             </div>
             
-            <div class="mt-10 pt-6 border-t border-gray-50">
+            <div class="mt-10 pt-6 border-t border-gray-50 flex items-center justify-between gap-4">
                 {{ $myRequests->appends(['donations_page' => $myDonations->currentPage()])->links() }}
+                <a href="{{ route('user.requests.history') }}" class="text-xs font-black text-red-500 hover:text-red-700 uppercase tracking-widest flex items-center gap-1 flex-shrink-0 hover:underline">
+                    Full History <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </a>
             </div>
         </div>
 
