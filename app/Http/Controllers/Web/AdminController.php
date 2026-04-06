@@ -14,7 +14,10 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str; // <-- ADDED: Required for generating Invoice Codes
+use Illuminate\Support\Str;
+
+// 🌟 NEW: Import the SystemAlert Notification 🌟
+use App\Notifications\SystemAlert;
 
 class AdminController extends Controller
 {
@@ -43,20 +46,38 @@ class AdminController extends Controller
     public function users(Request $request)
     {
         $currentStatus = $request->get('status', 'all');
+        if (!in_array($currentStatus, ['all', 'verified', 'rejected'], true)) {
+            $currentStatus = 'all';
+        }
 
-        $allCount = User::where('usertype', 'user')->count();
-        $pendingCount = User::where('usertype', 'user')->where('kyc_status', 'pending')->count();
+        $currentRole = $request->get('role', 'all');
+
+        $allCount      = User::where('usertype', 'user')->whereIn('kyc_status', ['verified', 'rejected'])->count();
         $verifiedCount = User::where('usertype', 'user')->where('kyc_status', 'verified')->count();
+        $rejectedCount = User::where('usertype', 'user')->where('kyc_status', 'rejected')->count();
 
-        $query = User::where('usertype', 'user');
+        $query = User::where('usertype', 'user')->whereIn('kyc_status', ['verified', 'rejected']);
 
-        if (in_array($currentStatus, ['pending', 'verified'], true)) {
+        if (in_array($currentStatus, ['verified', 'rejected'], true)) {
             $query->where('kyc_status', $currentStatus);
         }
 
-        $users = $query->latest()->paginate(10)->withQueryString();
+        if ($currentRole !== 'all') {
+            $query->whereHas('roles', fn($q) => $q->where('name', $currentRole));
+        }
 
-        return view('admin.users', compact('users', 'currentStatus', 'allCount', 'pendingCount', 'verifiedCount'));
+        $roles = \Spatie\Permission\Models\Role::where('guard_name', 'web')
+            ->where('name', '!=', 'Super Admin')
+            ->orderBy('name')
+            ->pluck('name');
+
+        $users = $query
+            ->with(['roles:id,name'])
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('admin.users.index', compact('users', 'currentStatus', 'currentRole', 'allCount', 'verifiedCount', 'rejectedCount', 'roles'));
     }
 
     public function toggleBlockUser($id) 
@@ -221,6 +242,26 @@ class AdminController extends Controller
         ));
     }
 
+    // Compatibility wrappers for invoice routes.
+    public function verifyInvoices(Request $request)
+    {
+        return $this->donations($request);
+    }
+
+    public function approveInvoice(Request $request, $id)
+    {
+        $request->merge(['status' => 'active']);
+
+        return $this->updateDonationStatus($request, $id);
+    }
+
+    public function rejectInvoice(Request $request, $id)
+    {
+        $request->merge(['status' => 'rejected']);
+
+        return $this->updateDonationStatus($request, $id);
+    }
+
     public function updateDonationStatus(Request $request, $id)
     {
         $donation = DonationInvoice::findOrFail($id);
@@ -237,10 +278,30 @@ class AdminController extends Controller
             $donation->user->increment('donation_invoice_count');
             
             $message = 'Donation Approved! Code ' . $donation->invoice_code . ' generated.';
+
+            // 🌟 NOTIFY USER: Invoice Approved
+            if ($donation->user) {
+                $donation->user->notify(new SystemAlert(
+                    'Invoice Approved! 🎉', 
+                    'Your donation invoice was approved. Thank you for your contribution!', 
+                    'fa-file-circle-check', 
+                    route('user.wallet')
+                ));
+            }
             
         } elseif ($request->status == 'rejected') {
             $donation->status = 'rejected';
             $message = 'Donation record rejected.';
+
+            // 🌟 NOTIFY USER: Invoice Rejected
+            if ($donation->user) {
+                $donation->user->notify(new SystemAlert(
+                    'Invoice Rejected ❌', 
+                    'Unfortunately, your recent donation invoice could not be verified.', 
+                    'fa-circle-xmark', 
+                    route('user.wallet')
+                ));
+            }
         }
 
         $donation->save();
@@ -303,46 +364,72 @@ class AdminController extends Controller
     // =========================================================================
     // 7. KYC & REPORTS
     // =========================================================================
-    public function kyc()
+    public function kyc(Request $request)
     {
-        $pendingUsers = User::where('kyc_status', 'pending')
+        $filter = $request->get('filter', 'all');
+        if (!in_array($filter, ['all', 'pending', 'verified', 'rejected'], true)) {
+            $filter = 'all';
+        }
+
+        $query = User::whereIn('kyc_status', ['pending', 'verified', 'rejected'])
             ->where('usertype', 'user')
-            ->with(['proofFiles' => function($query) {
-                $query->where('file_type', 'id_photo')->latest();
-            }])
-            ->latest()
-            ->get();
+            ->with(['proofFiles' => function($q) {
+                $q->where('file_type', 'id_photo')->latest();
+            }]);
 
-        $pendingCount = $pendingUsers->count();
-        $verifiedTodayCount = User::where('kyc_status', 'verified')->whereDate('updated_at', Carbon::today())->count();
-        $rejectedCount = User::where('kyc_status', 'rejected')->count();
+        if ($filter !== 'all') {
+            $query->where('kyc_status', $filter);
+        } else {
+            $query->orderByRaw("CASE WHEN kyc_status = 'pending' THEN 0 ELSE 1 END");
+        }
 
-        return view('admin.kyc', compact('pendingUsers', 'pendingCount', 'verifiedTodayCount', 'rejectedCount'));
+        $pendingUsers = $query->latest()->get();
+
+        $allCount      = User::where('usertype', 'user')->whereIn('kyc_status', ['pending', 'verified', 'rejected'])->count();
+        $pendingCount  = User::where('usertype', 'user')->where('kyc_status', 'pending')->count();
+        $verifiedCount = User::where('usertype', 'user')->where('kyc_status', 'verified')->count();
+        $rejectedCount = User::where('usertype', 'user')->where('kyc_status', 'rejected')->count();
+
+        return view('admin.kyc', compact('pendingUsers', 'filter', 'allCount', 'pendingCount', 'verifiedCount', 'rejectedCount'));
     }
 
     public function approveKyc($id)
     {
         $user = User::findOrFail($id);
-        $user->update(['kyc_status' => 'verified']);
+        $user->update([
+            'kyc_status' => 'verified',
+            'kyc_verified_at' => now(),
+        ]);
 
-        return back()->with('success', $user->name . ' has been verified and added to the User Directory.');
+        // 🌟 NOTIFY USER: KYC Approved
+        $user->notify(new SystemAlert(
+            'KYC Approved ✅', 
+            'Your identity has been verified. You can now donate blood!', 
+            'fa-shield-check', 
+            route('user.profile')
+        ));
+
+        return back()->with('success', $user->name . ' verification status updated to Success.');
     }
 
     public function rejectKyc($id)
     {
         $user = User::findOrFail($id);
-        
-        // Delete their invalid ID photo from your server storage
-        foreach($user->proofFiles as $file) {
-            Storage::disk('public')->delete($file->path);
-            $file->delete();
-        }
 
-        // Delete the user entirely
-        $userName = $user->name;
-        $user->delete();
+        $user->update([
+            'kyc_status' => 'rejected',
+            'kyc_verified_at' => null,
+        ]);
 
-        return back()->with('error', $userName . ' was rejected and deleted. They must register again with valid documents.');
+        // 🌟 NOTIFY USER: KYC Rejected
+        $user->notify(new SystemAlert(
+            'KYC Rejected ❌', 
+            'Your identity verification failed. Please check your documents and re-submit.', 
+            'fa-triangle-exclamation', 
+            route('user.profile')
+        ));
+
+        return back()->with('error', $user->name . ' verification status updated to Fail.');
     }
 
     public function reports(Request $request)
@@ -465,5 +552,71 @@ class AdminController extends Controller
         $user->save();
 
         return back()->with('success', 'Admin profile updated successfully.');
+    }
+
+    // Show the Create User Form
+    public function createUser()
+    {
+        // Ensure base user role is always available in the UI.
+        \Spatie\Permission\Models\Role::firstOrCreate([
+            'name' => 'user',
+            'guard_name' => 'web',
+        ]);
+
+        $roles = \Spatie\Permission\Models\Role::query()
+            ->withCount('permissions')
+            ->where('guard_name', 'web')
+            ->whereNotIn('name', ['Super Admin', 'user'])
+            ->orderBy('name')
+            ->get();
+        
+        return view('admin.users.create', compact('roles'));
+    }
+
+    // Save the new User
+    public function storeUser(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email', 
+            'phone' => 'required|string|unique:users,phone',
+            'password' => 'required|string|min:6',
+            'role' => 'nullable|string|max:255'
+        ]);
+
+        $selectedRoleName = $request->input('role');
+
+        $selectedAdminRole = null;
+        if ($selectedRoleName) {
+            $selectedAdminRole = \Spatie\Permission\Models\Role::query()
+                ->where('guard_name', 'web')
+                ->whereNotIn('name', ['Super Admin', 'user'])
+                ->where('name', $selectedRoleName)
+                ->first();
+        }
+
+        $defaultUserRole = \Spatie\Permission\Models\Role::firstOrCreate([
+            'name' => 'user',
+            'guard_name' => 'web',
+        ]);
+
+        $roleToAssign = $selectedAdminRole ?? $defaultUserRole;
+        $userType = $selectedAdminRole ? 'admin' : 'user';
+
+        // Create the user
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email, 
+            'phone' => $request->phone,
+            'password' => bcrypt($request->password),
+            'usertype' => $userType,
+            
+            'status' => 'active',
+            'kyc_status' => 'verified', 
+        ]);
+
+        $user->syncRoles([$roleToAssign]);
+
+        return redirect()->route('admin.users')->with('success', 'New user created and role assigned successfully.');
     }
 }

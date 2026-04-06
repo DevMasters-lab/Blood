@@ -18,6 +18,22 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\CheckMaintenanceMode::class,
             \App\Http\Middleware\SetLocale::class,
         ]);
+
+        $middleware->alias([
+            'admin' => \App\Http\Middleware\EnsureAdmin::class,
+        ]);
+
+        $middleware->redirectGuestsTo(function ($request) {
+            return $request->is('admin') || $request->is('admin/*')
+                ? route('login')
+                : route('user.login');
+        });
+
+        $middleware->redirectUsersTo(function ($request) {
+            return $request->is('admin') || $request->is('admin/*')
+                ? route('admin.dashboard')
+                : route('user.dashboard');
+        });
         
     })
     ->withExceptions(function (Exceptions $exceptions): void {

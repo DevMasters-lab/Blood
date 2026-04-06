@@ -40,10 +40,71 @@
                 
                 {{-- Desktop Actions & Profile Dropdown --}}
                 <div class="hidden md:flex items-center">
-                    {{-- NEW: Request Blood Button --}}
+                    {{-- Request Blood Button --}}
                     <a href="{{ route('user.requests.create') }}" class="flex items-center bg-red-50 text-red-600 px-5 py-2.5 rounded-full font-bold text-sm shadow-sm hover:bg-red-600 hover:text-white transition-all border border-red-100 mr-6">
                         <i class="fa-solid fa-hand-holding-medical mr-2"></i> {{ __('ui.request_blood') }}
                     </a>
+
+                    {{-- 🌟 USER NOTIFICATION BELL (DESKTOP) 🌟 --}}
+                    <div x-data="{ open: false }" class="relative inline-block text-left mr-6" @click.away="open = false">
+                        <div class="relative group cursor-pointer block">
+                            <div class="absolute -inset-1 bg-gradient-to-tr from-[#D32F2F] to-[#FF5252] rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-300"></div>
+                            <button @click="open = !open" type="button" class="relative flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-gray-100 text-[#D32F2F] shadow-sm active:scale-95 transition-transform hover:border-red-200 focus:outline-none">
+                                <i class="fa-solid fa-bell group-hover:scale-110 transition-transform"></i>
+                                
+                                @if(auth()->user()->unreadNotifications->count() > 0)
+                                    <span class="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-[#D32F2F] text-[9px] font-black text-white shadow-sm z-10">
+                                        {{ auth()->user()->unreadNotifications->count() }}
+                                    </span>
+                                @endif
+                            </button>
+                        </div>
+
+                        <div x-show="open" 
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                             x-transition:leave="transition ease-in duration-150"
+                             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                             x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+                             style="display: none;" 
+                             class="absolute right-0 top-full mt-4 w-80 sm:w-96 rounded-2xl border border-gray-100 bg-white shadow-xl z-50 overflow-hidden flex flex-col">
+                            
+                            <div class="flex items-center justify-between border-b border-gray-100 bg-gray-50/80 px-5 py-4">
+                                <h3 class="text-sm font-black text-gray-900">Notifications</h3>
+                                @if(auth()->user()->unreadNotifications->count() > 0)
+                                    <form action="{{ route('notifications.read_all') }}" method="POST" class="m-0">
+                                        @csrf
+                                        <button type="submit" class="text-[10px] font-bold text-[#D32F2F] hover:text-[#B71C1C] uppercase tracking-wider transition-colors">Mark all read</button>
+                                    </form>
+                                @endif
+                            </div>
+
+                            <div class="max-h-96 overflow-y-auto divide-y divide-gray-50">
+                                @forelse(auth()->user()->unreadNotifications as $notification)
+                                    <a href="{{ route('notifications.read', $notification->id) }}" class="flex items-start gap-4 px-5 py-4 transition-colors hover:bg-gray-50/80 group">
+                                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50 text-[#D32F2F] group-hover:bg-[#D32F2F] group-hover:text-white transition-colors">
+                                            <i class="fa-solid {{ $notification->data['icon'] ?? 'fa-bell' }}"></i>
+                                        </div>
+                                        <div class="flex-1 space-y-1">
+                                            <p class="text-sm font-bold text-gray-900">{{ $notification->data['title'] }}</p>
+                                            <p class="text-xs font-medium text-gray-500 line-clamp-2">{{ $notification->data['message'] }}</p>
+                                            <p class="text-[10px] font-bold text-gray-400 mt-2"><i class="fa-regular fa-clock mr-1"></i> {{ $notification->created_at->diffForHumans() }}</p>
+                                        </div>
+                                        <div class="w-2 h-2 rounded-full bg-[#D32F2F] mt-1.5 shrink-0"></div>
+                                    </a>
+                                @empty
+                                    <div class="px-5 py-10 text-center flex flex-col items-center">
+                                        <div class="w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center mb-3">
+                                            <i class="fa-regular fa-bell-slash text-gray-400 text-xl"></i>
+                                        </div>
+                                        <p class="text-sm font-bold text-gray-900">All caught up!</p>
+                                        <p class="text-xs text-gray-500 font-medium mt-1">You have no new notifications.</p>
+                                    </div>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
 
                     {{-- PROFILE DROPDOWN --}}
                     <div class="relative pl-6 border-l border-gray-200" x-data="{ profileOpen: false }" @click.away="profileOpen = false">
@@ -96,7 +157,7 @@
                         </div>
                     </div>
 
-                    {{-- LANGUAGE SWITCHER (MATCH FRONTEND POSITION) --}}
+                    {{-- LANGUAGE SWITCHER --}}
                     @if(($settings['enable_language_switcher'] ?? '1') === '1')
                         <div class="relative ml-6 pl-6 border-l border-gray-200" x-data="{ langOpen: false }" @click.away="langOpen = false">
                             <button @click="langOpen = !langOpen" class="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white pl-2 pr-3 py-1.5 shadow-sm hover:border-red-200 hover:bg-red-50/40 transition">
@@ -128,9 +189,58 @@
                     @endif
                 </div>
 
-                {{-- Mobile Menu Button --}}
-                <div class="md:hidden flex items-center">
-                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="text-gray-600 hover:text-red-600 focus:outline-none">
+                {{-- Mobile Menu Button & Notification --}}
+                <div class="md:hidden flex items-center gap-5">
+                    {{-- 🌟 MOBILE NOTIFICATION BELL 🌟 --}}
+                    <div x-data="{ open: false }" class="relative" @click.away="open = false">
+                        <button @click="open = !open" class="relative text-gray-500 hover:text-red-600 focus:outline-none transition-colors">
+                            <i class="fa-solid fa-bell text-xl"></i>
+                            @if(auth()->user()->unreadNotifications->count() > 0)
+                                <span class="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full border-2 border-white bg-[#D32F2F] text-[8px] font-black text-white shadow-sm">
+                                    {{ auth()->user()->unreadNotifications->count() }}
+                                </span>
+                            @endif
+                        </button>
+                        
+                        <div x-show="open" 
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                             style="display: none;" 
+                             class="absolute right-0 top-full mt-4 w-72 rounded-2xl border border-gray-100 bg-white shadow-xl z-50 overflow-hidden flex flex-col">
+                            
+                            <div class="flex items-center justify-between border-b border-gray-100 bg-gray-50/80 px-4 py-3">
+                                <h3 class="text-sm font-black text-gray-900">Notifications</h3>
+                                @if(auth()->user()->unreadNotifications->count() > 0)
+                                    <form action="{{ route('notifications.read_all') }}" method="POST" class="m-0">
+                                        @csrf
+                                        <button type="submit" class="text-[9px] font-bold text-[#D32F2F] uppercase tracking-wider">Mark all read</button>
+                                    </form>
+                                @endif
+                            </div>
+
+                            <div class="max-h-72 overflow-y-auto divide-y divide-gray-50">
+                                @forelse(auth()->user()->unreadNotifications as $notification)
+                                    <a href="{{ route('notifications.read', $notification->id) }}" class="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
+                                        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-50 text-[#D32F2F]">
+                                            <i class="fa-solid {{ $notification->data['icon'] ?? 'fa-bell' }} text-sm"></i>
+                                        </div>
+                                        <div class="flex-1 space-y-0.5">
+                                            <p class="text-xs font-bold text-gray-900">{{ $notification->data['title'] }}</p>
+                                            <p class="text-[10px] text-gray-500 line-clamp-2">{{ $notification->data['message'] }}</p>
+                                            <p class="text-[9px] font-bold text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+                                        </div>
+                                    </a>
+                                @empty
+                                    <div class="px-4 py-6 text-center">
+                                        <p class="text-xs font-bold text-gray-500">No new notifications.</p>
+                                    </div>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
+
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="text-gray-600 hover:text-red-600 focus:outline-none transition-colors">
                         <i class="fa-solid fa-bars text-2xl"></i>
                     </button>
                 </div>

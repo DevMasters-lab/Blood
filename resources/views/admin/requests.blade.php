@@ -1,17 +1,17 @@
-@extends('layouts.admin') {{-- Assuming you have an admin layout --}}
+@extends('layouts.admin')
 
 @section('content')
+@php
+    $adminUser = auth('admin')->user();
+    $isSuperAdmin = $adminUser?->hasRole('Super Admin');
+    $can = fn (string $permission): bool => $adminUser && ($isSuperAdmin || $adminUser->hasPermissionTo($permission, 'web'));
+@endphp
 <div class="space-y-6 animate-fade-in px-8 py-8">
-<!-- <div class="space-y-6 animate-fade-in"> -->
     {{-- Header section with total count --}}
-    <div class="flex justify-between items-center">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
             <h2 class="text-2xl font-black text-gray-900 tracking-tight">{{ __('ui.manage_blood_requests') }}</h2>
             <p class="text-sm text-gray-500 font-medium mt-1">{{ __('ui.review_remove_requests') }}</p>
-        </div>
-        <div class="bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 flex items-center gap-3">
-            <i class="fa-solid fa-notes-medical text-red-500"></i>
-            <span class="text-sm font-bold text-gray-700">{{ __('ui.total_requests_count', ['count' => $requests->total()]) }}</span>
         </div>
     </div>
 
@@ -28,9 +28,40 @@
     @endif
 
     {{-- Requests Table --}}
-    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden">
+    <div
+        x-data="{
+            search: '',
+            requestSearchIndex: @js($requests->map(fn ($req) => strtolower(trim(($req->requester->name ?? '') . ' ' . ($req->requester->phone ?? '') . ' ' . ($req->requester->email ?? '') . ' ' . ($req->hospital_name ?? '') . ' ' . ($req->blood_type ?? '') . ' ' . ($req->status ?? ''))))->values()),
+            matchesSearch(value) {
+                const term = this.search.trim().toLowerCase();
+                return term === '' || value.includes(term);
+            },
+            visibleRows() {
+                return this.requestSearchIndex.filter((value) => this.matchesSearch(value)).length;
+            }
+        }"
+        class="overflow-hidden rounded-[1.75rem] border border-gray-200 bg-white shadow-sm"
+    >
+        <div class="flex flex-col gap-4 border-b border-gray-100 bg-gray-50/70 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div class="w-full sm:max-w-xl">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-sm text-gray-400"></i>
+                    <input x-model="search" type="text" placeholder="Search request..." class="w-full rounded-xl border border-gray-200 bg-white py-3 pl-10 pr-20 text-sm font-medium text-gray-700 outline-none transition-all focus:border-[#D32F2F] focus:ring-2 focus:ring-[#D32F2F]/15">
+                    <button
+                        type="button"
+                        @click="search = ''"
+                        :class="search.trim().length > 0 ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-95 pointer-events-none'"
+                        class="absolute right-2 top-1/2 inline-flex -translate-y-1/2 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold text-gray-600 transition-all duration-200 ease-out hover:bg-gray-100 hover:text-gray-800"
+                    >
+                        <i class="fa-solid fa-rotate-left text-[10px]"></i>
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
+            <table class="w-full min-w-[1100px] text-left border-collapse">
                 <thead>
                     <tr class="bg-gray-50/50 border-b border-gray-100">
                         <th class="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ __('ui.requested_by') }}</th>
@@ -43,8 +74,9 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50">
-                    @forelse($requests as $req)
-                    <tr class="hover:bg-gray-50/50 transition-colors group">
+                    @if($requests->isNotEmpty())
+                    @foreach($requests as $req)
+                    <tr x-show="matchesSearch(@js(strtolower(trim(($req->requester->name ?? '') . ' ' . ($req->requester->phone ?? '') . ' ' . ($req->requester->email ?? '') . ' ' . ($req->hospital_name ?? '') . ' ' . ($req->blood_type ?? '') . ' ' . ($req->status ?? '')))))" class="group transition-colors hover:bg-gray-50/50">
                         <td class="px-8 py-6">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-full bg-gray-100 font-black text-gray-500 flex items-center justify-center text-sm flex-shrink-0">
@@ -63,14 +95,14 @@
                         <td class="px-8 py-6 text-center font-bold text-red-600">{{ $req->blood_type }}</td>
                         <td class="px-8 py-6 text-center">{{ $req->needed_date->format('d M Y') }}</td>
                         <td class="px-8 py-6 text-center">
-                            <span class="px-2 py-1 rounded text-xs font-bold {{ $req->status == 'open' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600' }}">
+                            <span class="inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-wider {{ $req->status == 'open' ? 'border-green-200 bg-green-50 text-green-700' : 'border-gray-200 bg-gray-50 text-gray-600' }}">
                                 {{ ucfirst($req->status) }}
                             </span>
                         </td>
                     <td class="px-8 py-6">
                         <div class="flex justify-center items-center gap-2">
                             {{-- Mark as Done Button (Only show if open) --}}
-                            @if($req->status == 'open')
+                            @if($req->status == 'open' && $can('accept_requests'))
                                 <form action="{{ route('admin.requests.status', $req->id) }}" method="POST" data-confirm="{{ __('ui.confirm_mark_completed') }}" onsubmit="return confirm(this.dataset.confirm)">
                                     @csrf
                                     <input type="hidden" name="status" value="completed">
@@ -81,23 +113,42 @@
                             @endif
 
                             {{-- Delete Button --}}
-                            <form action="{{ route('admin.requests.delete', $req->id) }}" method="POST" data-confirm="{{ __('ui.confirm_delete_request') }}" onsubmit="return confirm(this.dataset.confirm)">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="w-10 h-10 rounded-xl bg-red-50 text-red-600 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all shadow-sm" title="{{ __('ui.delete_request') }}">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
-                            </form>
+                            @if($can('reject_requests'))
+                                <form action="{{ route('admin.requests.delete', $req->id) }}" method="POST" data-confirm="{{ __('ui.confirm_delete_request') }}" onsubmit="return confirm(this.dataset.confirm)">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="w-10 h-10 rounded-xl bg-red-50 text-red-600 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all shadow-sm" title="{{ __('ui.delete_request') }}">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </form>
+                            @endif
                         </div>
                     </td>
                     </tr>
-                    @empty
-                    <tr>
-                        <td colspan="7" class="px-8 py-16 text-center text-gray-400 font-medium italic">
-                            {{ __('ui.no_blood_requests') }}
+                    @endforeach
+                    <tr x-show="visibleRows() === 0" style="display: none;">
+                        <td colspan="7" class="px-8 py-16 text-center">
+                            <div class="flex flex-col items-center justify-center">
+                                <div class="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-gray-50">
+                                    <i class="fa-solid fa-magnifying-glass text-2xl text-gray-300"></i>
+                                </div>
+                                <h3 class="text-lg font-black text-gray-800">No Matching Requests</h3>
+                                <p class="mt-1 text-sm font-medium text-gray-500">Try a different search term.</p>
+                            </div>
                         </td>
                     </tr>
-                    @endforelse
+                    @else
+                    <tr>
+                        <td colspan="7" class="px-8 py-16 text-center">
+                            <div class="flex flex-col items-center justify-center">
+                                <div class="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-gray-50">
+                                    <i class="fa-solid fa-notes-medical text-2xl text-gray-300"></i>
+                                </div>
+                                <h3 class="text-lg font-black text-gray-800">{{ __('ui.no_blood_requests') }}</h3>
+                            </div>
+                        </td>
+                    </tr>
+                    @endif
                 </tbody>
             </table>
         </div>

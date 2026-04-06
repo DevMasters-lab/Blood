@@ -14,7 +14,12 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\GoogleProvider;
+use Spatie\Permission\Models\Role;
 use Throwable;
+
+// 🌟 NEW: Imports for the Notification System 🌟
+use App\Notifications\SystemAlert;
+use Illuminate\Support\Facades\Notification;
 
 class UserWebController extends Controller
 {
@@ -71,6 +76,8 @@ class UserWebController extends Controller
                 'google_id' => $googleUser->getId(),
                 'auth_provider' => 'google',
             ]);
+
+            $this->assignDefaultUserRole($user);
         } else {
             $user->forceFill([
                 'name' => $user->name ?: ($googleUser->getName() ?: $googleUser->getNickname() ?: 'Google User'),
@@ -125,6 +132,8 @@ class UserWebController extends Controller
                 'telegram_username' => $payload['username'] ?? null,
                 'auth_provider' => 'telegram',
             ]);
+
+            $this->assignDefaultUserRole($user);
         } else {
             $user->forceFill([
                 'name' => $user->name ?: $name,
@@ -181,6 +190,8 @@ class UserWebController extends Controller
             'status' => 'active',
             'usertype' => 'user', 
         ]);
+
+        $this->assignDefaultUserRole($user);
 
         // 3. Handle ID Photo Upload
         if ($request->hasFile('id_photo')) {
@@ -244,6 +255,15 @@ class UserWebController extends Controller
             'status' => 'open',
         ]);
 
+        // 🌟 NOTIFY ADMINS: New Blood Request
+        $admins = User::whereIn('usertype', ['admin'])->get();
+        Notification::send($admins, new SystemAlert(
+            'New Blood Request!', 
+            auth()->user()->name . ' just requested ' . $request->blood_type . ' blood at ' . $request->hospital_name . '.', 
+            'fa-droplet', 
+            route('admin.requests') 
+        ));
+
         return redirect()->route('user.dashboard')->with('success', 'Request Created Successfully!');
     }
     
@@ -285,6 +305,15 @@ class UserWebController extends Controller
             ]);
         }
 
+        // 🌟 NOTIFY ADMINS: New Invoice Submitted
+        $admins = User::whereIn('usertype', ['admin'])->get();
+        Notification::send($admins, new SystemAlert(
+            'Invoice Verification Required', 
+            auth()->user()->name . ' submitted a new donation invoice for review.', 
+            'fa-file-invoice', 
+            route('admin.invoices') 
+        ));
+
         // Redirects to the new Wallet instead of the dashboard
         return redirect()->route('user.wallet')->with('success', 'Donation invoice submitted! Waiting for Admin verification.');
     }
@@ -312,6 +341,17 @@ class UserWebController extends Controller
     public function requestHistory(Request $request)
     {
         $query = BloodRequest::where('requester_id', Auth::id())->latest();
+
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+
+            $query->where(function ($builder) use ($search) {
+                $builder->where('hospital_name', 'like', "%{$search}%")
+                    ->orWhere('patient_name', 'like', "%{$search}%")
+                    ->orWhere('blood_type', 'like', "%{$search}%")
+                    ->orWhere('status', 'like', "%{$search}%");
+            });
+        }
 
         // Filter by status
         if ($request->filled('status') && $request->status !== 'all') {
@@ -397,7 +437,12 @@ class UserWebController extends Controller
 
     private function completeLogin(Request $request, User $user)
     {
-        if ($user->usertype === 'admin') {
+        $hasAdminRole = $user->roles()
+            ->where('guard_name', 'web')
+            ->where('name', '!=', 'user')
+            ->exists();
+
+        if ($user->usertype === 'admin' || $hasAdminRole) {
             return redirect()->route('user.login')->withErrors([
                 'identifier' => 'Administrators must login via the Admin Portal.',
             ]);
@@ -429,6 +474,20 @@ class UserWebController extends Controller
         ])->save();
 
         return redirect()->route('user.dashboard');
+    }
+
+    private function assignDefaultUserRole(User $user): void
+    {
+        $defaultRole = Role::firstOrCreate([
+            'name' => 'user',
+            'guard_name' => 'web',
+        ]);
+
+        if (! $defaultRole || $user->roles()->where('roles.id', $defaultRole->id)->exists()) {
+            return;
+        }
+
+        $user->assignRole($defaultRole);
     }
 
     private function isValidTelegramLogin(array $payload): bool

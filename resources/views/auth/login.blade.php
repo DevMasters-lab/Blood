@@ -99,7 +99,7 @@
                 </div>
             @endif
 
-            <form action="{{ route('login') }}" method="POST" class="space-y-8">
+            <form action="{{ route('admin.login.submit') }}" method="POST" class="space-y-8">
                 @csrf
                 
                 {{-- PHONE INPUT --}}

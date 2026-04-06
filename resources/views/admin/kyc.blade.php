@@ -1,14 +1,28 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="space-y-6 animate-fade-in px-8 py-8">
+@php
+    $adminUser = auth('admin')->user();
+    $isSuperAdmin = $adminUser?->hasRole('Super Admin');
+    $can = fn (string $permission): bool => $adminUser && ($isSuperAdmin || $adminUser->hasPermissionTo($permission, 'web'));
+@endphp
+<div class="space-y-6 animate-fade-in px-8 py-8"">
     {{-- Header with count --}}
-    <div class="flex justify-between items-center">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
             <h2 class="text-2xl font-black text-gray-900 tracking-tight">{{ __('ui.kyc_verifications') }}</h2>
             <p class="text-sm text-gray-500 font-medium mt-1">{{ __('ui.kyc_header_desc') }}</p>
         </div>
-
+                    <form action="{{ route('admin.kyc') }}" method="GET" class="relative shrink-0">
+                <i class="fa-solid fa-filter absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none z-10"></i>
+                <select name="filter" onchange="this.form.submit()" class="bg-white border border-gray-200 text-gray-700 text-sm font-bold rounded-2xl pl-10 pr-10 py-3 outline-none focus:ring-2 focus:ring-[#D32F2F]/20 shadow-sm cursor-pointer appearance-none hover:border-gray-300 transition-colors">
+                    <option value="all"     {{ ($filter ?? 'all') === 'all'      ? 'selected' : '' }}>All ({{ $allCount ?? 0 }})</option>
+                    <option value="pending"  {{ ($filter ?? '') === 'pending'   ? 'selected' : '' }}>Pending ({{ $pendingCount ?? 0 }})</option>
+                    <option value="verified" {{ ($filter ?? '') === 'verified'  ? 'selected' : '' }}>Success ({{ $verifiedCount ?? 0 }})</option>
+                    <option value="rejected" {{ ($filter ?? '') === 'rejected'  ? 'selected' : '' }}>Fail ({{ $rejectedCount ?? 0 }})</option>
+                </select>
+                <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs z-10"></i>
+            </form>
     </div>
 
     {{-- Alerts --}}
@@ -22,25 +36,55 @@
             <i class="fa-solid fa-triangle-exclamation"></i> {{ session('error') }}
         </div>
     @endif
-
-
-
     {{-- Data Table --}}
-    <div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden">
+    <div
+        x-data="{
+            search: '',
+            userSearchIndex: @js($pendingUsers->map(fn ($user) => strtolower(trim($user->name . ' ' . ($user->phone ?? '') . ' ' . ($user->id_number ?? ''))))->values()),
+            matchesSearch(value) {
+                const term = this.search.trim().toLowerCase();
+                return term === '' || value.includes(term);
+            },
+            visibleRows() {
+                return this.userSearchIndex.filter((value) => this.matchesSearch(value)).length;
+            }
+        }"
+        class="overflow-hidden rounded-[1.75rem] border border-gray-200 bg-white shadow-sm"
+    >
+        <div class="flex flex-col gap-4 border-b border-gray-100 bg-gray-50/70 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div class="w-full sm:max-w-xl">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-sm text-gray-400"></i>
+                    <input x-model="search" type="text" placeholder="Search KYC user..." class="w-full rounded-xl border border-gray-200 bg-white py-3 pl-10 pr-20 text-sm font-medium text-gray-700 outline-none transition-all focus:border-[#D32F2F] focus:ring-2 focus:ring-[#D32F2F]/15">
+                    <button
+                        type="button"
+                        @click="search = ''"
+                        :class="search.trim().length > 0 ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-95 pointer-events-none'"
+                        class="absolute right-2 top-1/2 inline-flex -translate-y-1/2 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold text-gray-600 transition-all duration-200 ease-out hover:bg-gray-100 hover:text-gray-800"
+                    >
+                        <i class="fa-solid fa-rotate-left text-[10px]"></i>
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
+            <table class="w-full min-w-[980px] text-left border-collapse">
                 <thead>
                     <tr class="border-b border-gray-100 bg-gray-50/50">
                         <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ __('ui.user_details') }}</th>
                         <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ __('ui.phone_number') }}</th>
                         <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ __('ui.id_passport_info') }}</th>
                         <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ __('ui.document_proof') }}</th>
+                        <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
                         <th class="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">{{ __('ui.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
-                    @forelse($pendingUsers as $user)
-                        <tr class="hover:bg-gray-50/50 transition-colors group">
+                    @if($pendingUsers->isNotEmpty())
+                    @foreach($pendingUsers as $user)
+                        <tr x-show="matchesSearch(@js(strtolower(trim($user->name . ' ' . ($user->phone ?? '') . ' ' . ($user->id_number ?? '')))))" class="group transition-colors hover:bg-gray-50/50">
                             <td class="px-8 py-6">
                                 <div class="flex items-center gap-4">
                                     <div class="w-12 h-12 rounded-full bg-gray-100 font-black text-gray-500 flex items-center justify-center">
@@ -56,7 +100,6 @@
                             </td>
                             <td class="px-8 py-6">
                                 <p class="text-sm font-black text-gray-900">{{ $user->id_number }}</p>
-                                <span class="inline-block mt-1 px-2.5 py-1 bg-orange-100 text-orange-600 text-[9px] font-black uppercase tracking-widest rounded-md">{{ __('ui.pending') }}</span>
                             </td>
                             <td class="px-8 py-6">
                                 @if($user->proofFiles->isNotEmpty())
@@ -81,34 +124,69 @@
                                     <span class="text-xs font-bold text-gray-400 italic">{{ __('ui.no_document') }}</span>
                                 @endif
                             </td>
+                            <td class="px-8 py-6">
+                                @php
+                                    $kycLabel = $user->kyc_status === 'verified' ? 'Success' : ($user->kyc_status === 'rejected' ? 'Fail' : 'Pending');
+                                    $kycClass = $user->kyc_status === 'verified'
+                                        ? 'bg-emerald-100 text-emerald-700'
+                                        : ($user->kyc_status === 'rejected' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700');
+                                @endphp
+                                <span class="inline-flex items-center rounded-lg px-3 py-1 text-[10px] font-black uppercase tracking-wider {{ $kycClass }}">
+                                    {{ $kycLabel }}
+                                </span>
+                            </td>
                             <td class="px-8 py-6 text-right">
                                 <div class="flex justify-end gap-2">
                                     {{-- Approve Form --}}
-                                    <form action="{{ route('admin.kyc.approve', $user->id) }}" method="POST">
-                                        @csrf
-                                        <button type="submit" class="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center hover:bg-green-500 hover:text-white transition-colors border border-green-100" title="{{ __('ui.verify_user') }}">
-                                            <i class="fa-solid fa-check"></i>
-                                        </button>
-                                    </form>
+                                    @if($can('accept_kyc') && $user->kyc_status === 'pending')
+                                        <form action="{{ route('admin.kyc.approve', $user->id) }}" method="POST">
+                                            @csrf
+                                            <button type="submit" class="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center hover:bg-green-500 hover:text-white transition-colors border border-green-100" title="{{ __('ui.verify_user') }}">
+                                                <i class="fa-solid fa-check"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                     
                                     {{-- Reject Form --}}
-                                    <form action="{{ route('admin.kyc.reject', $user->id) }}" method="POST" data-confirm="{{ __('ui.confirm_reject_user') }}" onsubmit="return confirm(this.dataset.confirm);">
-                                        @csrf
-                                        <button type="submit" class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors border border-red-100" title="{{ __('ui.reject_user') }}">
-                                            <i class="fa-solid fa-xmark"></i>
-                                        </button>
-                                    </form>
+                                    @if($can('reject_kyc') && $user->kyc_status === 'pending')
+                                        <form action="{{ route('admin.kyc.reject', $user->id) }}" method="POST" data-confirm="{{ __('ui.confirm_reject_user') }}" onsubmit="return confirm(this.dataset.confirm);">
+                                            @csrf
+                                            <button type="submit" class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors border border-red-100" title="{{ __('ui.reject_user') }}">
+                                                <i class="fa-solid fa-xmark"></i>
+                                            </button>
+                                        </form>
+                                    @endif
+
+                                    @if((!$can('accept_kyc') && !$can('reject_kyc')) || $user->kyc_status !== 'pending')
+                                        <span class="inline-flex items-center px-2 py-1 text-[10px] font-bold text-gray-400">No actions</span>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="px-8 py-16 text-center text-gray-400 font-bold">
-                                <i class="fa-solid fa-shield-check text-4xl mb-3 text-gray-300"></i>
-                                <p>{{ __('ui.all_caught_up') }}</p>
+                    @endforeach
+                        <tr x-show="visibleRows() === 0" style="display: none;">
+                            <td colspan="6" class="px-8 py-16 text-center">
+                                <div class="flex flex-col items-center justify-center">
+                                    <div class="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-gray-50">
+                                        <i class="fa-solid fa-magnifying-glass text-2xl text-gray-300"></i>
+                                    </div>
+                                    <h3 class="text-lg font-black text-gray-800">No Matching Users</h3>
+                                    <p class="mt-1 text-sm font-medium text-gray-500">Try a different search term.</p>
+                                </div>
                             </td>
                         </tr>
-                    @endforelse
+                    @else
+                        <tr>
+                            <td colspan="6" class="px-8 py-16 text-center">
+                                <div class="flex flex-col items-center justify-center">
+                                    <div class="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-gray-50">
+                                        <i class="fa-solid fa-circle-check text-2xl text-gray-300"></i>
+                                    </div>
+                                    <h3 class="text-lg font-black text-gray-800">All caught up! No pending verifications.</h3>
+                                </div>
+                            </td>
+                        </tr>
+                    @endif
                 </tbody>
             </table>
         </div>

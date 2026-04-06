@@ -1,7 +1,7 @@
 @extends('layouts.user')
 
 @section('content')
-<div class="space-y-8 animate-fade-in">
+<div class="space-y-6 animate-fade-in px-8 py-8">
 
     {{-- Page Header --}}
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -26,88 +26,80 @@
         </div>
     @endif
 
-    {{-- Stats Summary Cards --}}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm text-center">
-            <p class="text-3xl font-black text-gray-900">{{ $stats['total'] }}</p>
-            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Total</p>
-        </div>
-        <div class="bg-white rounded-2xl p-6 border border-green-100 shadow-sm text-center">
-            <p class="text-3xl font-black text-green-600">{{ $stats['open'] }}</p>
-            <p class="text-xs font-bold text-green-400 uppercase tracking-widest mt-1">Active / Open</p>
-        </div>
-        <div class="bg-white rounded-2xl p-6 border border-blue-100 shadow-sm text-center">
-            <p class="text-3xl font-black text-blue-600">{{ $stats['completed'] }}</p>
-            <p class="text-xs font-bold text-blue-400 uppercase tracking-widest mt-1">Completed</p>
-        </div>
-        <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm text-center">
-            <p class="text-3xl font-black text-gray-400">{{ $stats['cancelled'] }}</p>
-            <p class="text-xs font-bold text-gray-300 uppercase tracking-widest mt-1">Cancelled / Expired</p>
-        </div>
-    </div>
-
-    {{-- Filters --}}
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <form method="GET" action="{{ route('user.requests.history') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-            
-            {{-- Status Filter --}}
-            <div>
-                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Status</label>
-                <select name="status" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-800 outline-none focus:ring-2 focus:ring-red-400 cursor-pointer">
-                    <option value="all" {{ request('status', 'all') === 'all' ? 'selected' : '' }}>All Statuses</option>
-                    <option value="open"      {{ request('status') === 'open'      ? 'selected' : '' }}>Open</option>
-                    <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>Completed</option>
-                    <option value="reserved"  {{ request('status') === 'reserved'  ? 'selected' : '' }}>Reserved</option>
-                    <option value="cancelled" {{ request('status') === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
-                    <option value="expired"   {{ request('status') === 'expired'   ? 'selected' : '' }}>Expired</option>
-                </select>
-            </div>
-
-            {{-- Blood Type Filter --}}
-            <div>
-                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Blood Type</label>
-                <select name="blood_type" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-800 outline-none focus:ring-2 focus:ring-red-400 cursor-pointer">
-                    <option value="">All Types</option>
-                    @foreach(['A+','A-','B+','B-','O+','O-','AB+','AB-'] as $type)
-                        <option value="{{ $type }}" {{ request('blood_type') === $type ? 'selected' : '' }}>{{ $type }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            {{-- From Date --}}
-            <div>
-                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">From Date</label>
-                <input type="date" name="from_date" value="{{ request('from_date') }}"
-                       class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-800 outline-none focus:ring-2 focus:ring-red-400 cursor-pointer">
-            </div>
-
-            {{-- To Date + Submit --}}
-            <div>
-                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">To Date</label>
-                <div class="flex gap-2">
-                    <input type="date" name="to_date" value="{{ request('to_date') }}"
-                           class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-800 outline-none focus:ring-2 focus:ring-red-400 cursor-pointer">
-                    <button type="submit" class="px-4 py-2.5 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-all shadow-sm flex-shrink-0">
+    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+        {{-- Filters --}}
+        <div class="p-6 border-b border-gray-100 bg-gray-50/50">
+            <div class="{{ request()->hasAny(['search', 'status', 'blood_type', 'from_date', 'to_date']) ? 'mb-5 ' : '' }}flex flex-wrap items-center gap-2 text-xs font-bold text-gray-500">
+                @if(request()->hasAny(['search', 'status', 'blood_type', 'from_date', 'to_date']))
+                    <span class="inline-flex items-center gap-2 rounded-lg border border-red-100 bg-red-50 px-3 py-1.5 text-red-600">
                         <i class="fa-solid fa-filter"></i>
-                    </button>
-                    @if(request()->hasAny(['status', 'blood_type', 'from_date', 'to_date']))
-                        <a href="{{ route('user.requests.history') }}" class="px-4 py-2.5 bg-gray-100 text-gray-500 rounded-xl font-bold text-sm hover:bg-gray-200 transition-all flex-shrink-0" title="Clear filters">
-                            <i class="fa-solid fa-xmark"></i>
-                        </a>
-                    @endif
-                </div>
+                        Filter active
+                    </span>
+                @endif
             </div>
 
-        </form>
-    </div>
+            <form method="GET" action="{{ route('user.requests.history') }}" class="space-y-4">
+                <div class="flex flex-col lg:flex-row lg:items-center rounded-xl border border-gray-200 bg-white overflow-hidden">
+                    <div class="relative flex-1 min-w-0 border-b lg:border-b-0 lg:border-r border-gray-200">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by hospital, patient, blood type, or status..."
+                               class="w-full bg-transparent pl-9 pr-4 py-3 text-sm font-semibold text-gray-800 outline-none placeholder:text-gray-400">
+                    </div>
 
-    {{-- Request History Table --}}
-    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden">
+                    <div class="flex-1 min-w-[200px] border-b lg:border-b-0 lg:border-r border-gray-200">
+                        <select name="status" class="w-full bg-transparent px-4 py-3 text-sm font-semibold text-gray-700 outline-none cursor-pointer">
+                            <option value="all" {{ request('status', 'all') === 'all' ? 'selected' : '' }}>Status: All</option>
+                            <option value="open" {{ request('status') === 'open' ? 'selected' : '' }}>Status: Open</option>
+                            <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>Status: Completed</option>
+                            <option value="reserved" {{ request('status') === 'reserved' ? 'selected' : '' }}>Status: Reserved</option>
+                            <option value="cancelled" {{ request('status') === 'cancelled' ? 'selected' : '' }}>Status: Cancelled</option>
+                            <option value="expired" {{ request('status') === 'expired' ? 'selected' : '' }}>Status: Expired</option>
+                        </select>
+                    </div>
+
+                    <div class="flex-1 min-w-[170px] border-b lg:border-b-0 lg:border-r border-gray-200">
+                        <select name="blood_type" class="w-full bg-transparent px-4 py-3 text-sm font-semibold text-gray-700 outline-none cursor-pointer">
+                            <option value="">Blood Type: All</option>
+                            @foreach(['A+','A-','B+','B-','O+','O-','AB+','AB-'] as $type)
+                                <option value="{{ $type }}" {{ request('blood_type') === $type ? 'selected' : '' }}>Blood Type: {{ $type }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="flex items-center gap-2 p-2 lg:p-1.5">
+                        <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-100 transition-colors shadow-sm">
+                            <i class="fa-solid fa-magnifying-glass text-xs"></i> Search
+                        </button>
+                        <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-red-700 transition-colors shadow-sm">
+                            <i class="fa-solid fa-filter text-xs"></i> Filter
+                        </button>
+                        @if(request()->hasAny(['search', 'status', 'blood_type', 'from_date', 'to_date']))
+                            <a href="{{ route('user.requests.history') }}" class="inline-flex items-center justify-center rounded-lg bg-gray-50 border border-gray-200 px-3 py-2.5 text-sm font-bold text-gray-500 hover:bg-gray-100 transition-colors" title="Clear filters">
+                                <i class="fa-solid fa-xmark"></i>
+                            </a>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="rounded-xl border border-gray-200 bg-white px-3 py-2.5 flex items-center gap-3">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-gray-400">From</span>
+                        <input type="date" name="from_date" value="{{ request('from_date') }}" class="w-full bg-transparent text-sm font-semibold text-gray-700 outline-none">
+                    </div>
+                    <div class="rounded-xl border border-gray-200 bg-white px-3 py-2.5 flex items-center gap-3">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-gray-400">To</span>
+                        <input type="date" name="to_date" value="{{ request('to_date') }}" class="w-full bg-transparent text-sm font-semibold text-gray-700 outline-none">
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        {{-- Request History Table --}}
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-gray-50/50 border-b border-gray-100">
-                        <th class="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">#</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">#</th>
                         <th class="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Blood Type</th>
                         <th class="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Hospital</th>
                         <th class="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Patient</th>
@@ -121,7 +113,7 @@
                 <tbody class="divide-y divide-gray-50">
                     @forelse($requests as $req)
                     <tr class="hover:bg-gray-50/50 transition-colors">
-                        <td class="px-6 py-5 text-sm text-gray-400 font-bold">{{ $loop->iteration + ($requests->currentPage() - 1) * $requests->perPage() }}</td>
+                        <td class="px-6 py-5 text-sm text-gray-400 font-bold text-center">{{ $loop->iteration + ($requests->currentPage() - 1) * $requests->perPage() }}</td>
                         <td class="px-6 py-5 text-center">
                             <span class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-red-50 text-red-600 font-black text-sm border border-red-100/50">
                                 {{ $req->blood_type }}
@@ -181,7 +173,7 @@
                                 <div>
                                     <p class="font-black text-lg text-gray-500">No requests found</p>
                                     <p class="text-sm font-medium mt-1">
-                                        @if(request()->hasAny(['status', 'blood_type', 'from_date', 'to_date']))
+                                        @if(request()->hasAny(['search', 'status', 'blood_type', 'from_date', 'to_date']))
                                             Try adjusting your filters or <a href="{{ route('user.requests.history') }}" class="text-red-500 underline">clear all filters</a>.
                                         @else
                                             You haven't submitted any blood requests yet.

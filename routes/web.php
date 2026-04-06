@@ -2,8 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Web\AdminController;
+use App\Http\Controllers\Web\RoleController;
 use App\Http\Controllers\Web\WebAuthController;
 use App\Http\Controllers\Web\UserWebController;
+use App\Http\Controllers\Web\NotificationController; // 🌟 NEW: Added Notification Controller
 use App\Models\BloodRequest;
 use Illuminate\Http\Request;
 
@@ -55,7 +57,7 @@ Route::get('/language/{locale}', function ($locale) {
 */
 
 // --- USER LOGIN & REGISTER ---
-Route::middleware('guest')->group(function () {
+Route::middleware('guest:web')->group(function () {
     Route::get('/register', [UserWebController::class, 'showRegisterForm'])->name('register');
     Route::post('/register', [UserWebController::class, 'register']);
     
@@ -67,18 +69,31 @@ Route::middleware('guest')->group(function () {
 });
 
 // --- ADMIN LOGIN (Separate Controller) ---
-Route::middleware('guest')->group(function () {
+Route::middleware('guest:admin')->group(function () {
     Route::get('/admin/login', [WebAuthController::class, 'showLoginForm'])->name('login'); // Admin Login Form
     Route::post('/admin/login', [WebAuthController::class, 'login'])->name('admin.login.submit');
 });
 
 // --- LOGOUT (Shared) ---
 Route::post('/logout', [UserWebController::class, 'logout'])->name('logout');
+Route::post('/admin/logout', [WebAuthController::class, 'logout'])->name('admin.logout');
 
 
 /*
 |--------------------------------------------------------------------------
-| 3. USER PORTAL (Normal Users)
+| 3. SHARED AUTH ROUTES (Notifications)
+|--------------------------------------------------------------------------
+| Accessible by both standard users (web) AND admins (admin)
+*/
+Route::middleware(['auth:web,admin'])->group(function () {
+    Route::get('/notifications/{id}/read', [NotificationController::class, 'readAndRedirect'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read_all');
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| 4. USER PORTAL (Normal Users)
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth'])->prefix('user')->group(function () {
@@ -90,7 +105,7 @@ Route::middleware(['auth'])->prefix('user')->group(function () {
     Route::get('/profile', [UserWebController::class, 'showProfile'])->name('user.profile');
     Route::put('/profile', [UserWebController::class, 'updateProfile'])->name('user.profile.update');
 
-    // --- NEW: INVOICE WALLET ---
+    // Invoice Wallet
     Route::get('/wallet', [UserWebController::class, 'wallet'])->name('user.wallet');
 
     // Donation Logic
@@ -99,7 +114,6 @@ Route::middleware(['auth'])->prefix('user')->group(function () {
     Route::get('/donation/{id}/certificate', [UserWebController::class, 'certificate'])->name('user.certificate');
 
     // Request Logic 
-    // (Move these to Public section if you want Guest Requests to work without logging in)
     Route::get('/requests/create', [UserWebController::class, 'showCreateRequestForm'])->name('user.requests.create');
     Route::post('/requests', [UserWebController::class, 'storeRequest'])->name('user.requests.store');
     Route::put('/requests/{id}/complete', [UserWebController::class, 'markRequestAsComplete'])->name('user.requests.complete');
@@ -111,10 +125,10 @@ Route::middleware(['auth'])->prefix('user')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| 4. ADMIN PANEL (Super Admin Only)
+| 5. ADMIN PANEL (Super Admin Only)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth'])->prefix('admin')->group(function () {
+Route::middleware(['auth:admin', 'admin'])->prefix('admin')->group(function () {
     // Admin Language Switch (isolated from frontend)
     Route::get('/language/{locale}', function ($locale) {
         if (!in_array($locale, ['en', 'km'], true)) {
@@ -136,17 +150,19 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::post('/requests/{id}/status', [AdminController::class, 'updateRequestStatus'])->name('admin.requests.status');
     Route::delete('/requests/{id}', [AdminController::class, 'deleteRequest'])->name('admin.requests.delete');
 
-    // Old Donation Records Management (If keeping)
+    // Old Donation Records Management
     Route::get('/donations', [AdminController::class, 'donations'])->name('admin.donations');
     Route::post('/donations/{id}/status', [AdminController::class, 'updateDonationStatus'])->name('admin.donations.status');
 
-    // --- NEW: VERIFY INVOICES (The new Donation Invoice Module) ---
+    // Verify Invoices
     Route::get('/invoices', [AdminController::class, 'verifyInvoices'])->name('admin.invoices');
     Route::post('/invoices/{id}/approve', [AdminController::class, 'approveInvoice'])->name('admin.invoices.approve');
     Route::post('/invoices/{id}/reject', [AdminController::class, 'rejectInvoice'])->name('admin.invoices.reject');
 
     // User Management
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
+    Route::get('/users/create', [AdminController::class, 'createUser'])->name('admin.users.create');
+    Route::post('/users', [AdminController::class, 'storeUser'])->name('admin.users.store');       
     Route::post('/users/{id}/verify', [AdminController::class, 'verifyUser'])->name('admin.users.verify');
     Route::get('/users/{id}', [AdminController::class, 'showUser'])->name('admin.users.show');
     Route::post('/users/{id}/toggle', [AdminController::class, 'toggleBlockUser'])->name('admin.users.toggle'); // Block/Unblock
@@ -164,7 +180,10 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::post('/kyc/{id}/reject', [AdminController::class, 'rejectKyc'])->name('admin.kyc.reject');
     Route::get('/reports', [AdminController::class, 'reports'])->name('admin.reports');
 
-    // Admin Profile (Optional)
+    // Admin Profile
     Route::get('/profile', [AdminController::class, 'profile'])->name('admin.profile');
     Route::put('/profile', [AdminController::class, 'updateProfile'])->name('admin.profile.update');
+
+    // Role Management
+    Route::resource('roles', \App\Http\Controllers\Web\RoleController::class)->names('admin.roles');
 });

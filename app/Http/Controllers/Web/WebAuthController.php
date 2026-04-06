@@ -10,6 +10,10 @@ class WebAuthController extends Controller
 {
     public function showLoginForm()
     {
+        if (Auth::guard('admin')->check()) {
+            return redirect()->route('admin.dashboard');
+        }
+
         return view('auth.login');
     }
 
@@ -22,11 +26,18 @@ class WebAuthController extends Controller
         ]);
 
         // 2. Attempt the login
-        if (Auth::attempt($credentials)) {
+        if (Auth::guard('admin')->attempt($credentials)) {
+            /** @var \App\Models\User $authUser */
+            $authUser = Auth::guard('admin')->user();
+
+            $hasAdminRole = $authUser->roles()
+                ->where('guard_name', 'web')
+                ->where('name', '!=', 'user')
+                ->exists();
             
-            // 3. STRICT CHECK: Only allow 'admin' usertype
-            if (Auth::user()->usertype !== 'admin') {
-                Auth::logout(); // Log them out immediately
+            // 3. STRICT CHECK: allow only admin-type accounts
+            if ($authUser->usertype !== 'admin' && ! $hasAdminRole) {
+                Auth::guard('admin')->logout(); // Log them out immediately
                 return back()->withErrors([
                     'phone' => 'Access denied. You do not have administrator privileges.',
                 ]);
@@ -45,7 +56,7 @@ class WebAuthController extends Controller
 
     public function logout(Request $request)
     {
-        Auth::logout();
+        Auth::guard('admin')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect('/admin/login');
