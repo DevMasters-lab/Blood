@@ -20,11 +20,12 @@ jobs:
       - name: Install Composer dependencies
         run: |
           cd /var/www/Blood_Production
-          composer install --no-dev --optimize-autoloader
+          /usr/local/bin/composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-scripts
 
-      - name: Laravel optimize and migrate
+      - name: Laravel commands
         run: |
           cd /var/www/Blood_Production
+          php artisan package:discover --ansi
           php artisan migrate --force
           php artisan optimize:clear
           php artisan config:cache
