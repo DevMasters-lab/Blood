@@ -14,7 +14,7 @@ return [
     'register_as_donor' => 'ចុះឈ្មោះជាអ្នកបរិច្ចាគ',
     'language' => 'ភាសា',
     'english' => 'អង់គ្លេស',
-    'khmer' => 'ខ្មែរ',
+    'khmer' => 'ភាសាខ្មែរ',
     'admin_portal' => 'ផ្នែកគ្រប់គ្រង',
     'donor' => 'អ្នកបរិច្ចាគ',
     'not_available' => 'មិនមាន',

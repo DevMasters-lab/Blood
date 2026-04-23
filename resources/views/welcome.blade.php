@@ -16,14 +16,14 @@
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 flex flex-col min-h-screen {{ app()->getLocale() === 'km' ? 'font-km' : '' }}" x-data="{ mobileMenuOpen: false }">
+<body class="bg-gray-50 text-gray-800 flex flex-col min-h-screen font-sans {{ app()->getLocale() === 'km' ? 'font-km' : '' }}" x-data="{ mobileMenuOpen: false }">
     
     {{-- FETCH SETTINGS FROM DATABASE ONCE FOR THE WHOLE PAGE --}}
     @php
         $settings = \App\Models\Setting::pluck('value', 'key')->toArray();
     @endphp
 
-    {{-- 🌟 NAVBAR (Identical to user.blade.php) 🌟 --}}
+    {{-- 🌟 NAVBAR 🌟 --}}
     <nav class="bg-white shadow-md fixed w-full z-50 top-0 transition-all duration-300" x-data="notificationSystem()" x-init="initNotifications()">
         <div class="container mx-auto px-6 py-4">
             <div class="flex justify-between items-center">
@@ -119,7 +119,8 @@
                             <i class="fa-solid fa-hand-holding-medical mr-2"></i> {{ __('ui.request_blood') }}
                         </a>
                         <div class="flex items-center pl-6 border-l border-gray-200">
-                            <a href="{{ route('user.login') }}" class="flex items-center text-gray-600 hover:text-[#D32F2F] font-bold transition mr-5">
+                            {{-- 🌟 RESTORED DESKTOP LOGIN ICON 🌟 --}}
+                            <a href="{{ route('user.login') }}" class="flex items-center text-gray-600 hover:text-[#D32F2F] mr-5 font-bold transition">
                                 <i class="fa-solid fa-right-to-bracket mr-2"></i> {{ __('ui.login') }}
                             </a>
                             <a href="{{ route('register') }}" class="bg-red-600 text-white px-5 py-2 rounded-full font-bold text-sm shadow-sm hover:bg-red-700 transition">
@@ -189,7 +190,15 @@
                                 <span class="flex h-7 w-7 items-center justify-center rounded-full bg-red-50 text-red-500">
                                     <i class="fa-solid fa-globe text-xs"></i>
                                 </span>
-                                <span class="text-xs font-black text-gray-700 uppercase">{{ app()->getLocale() }}</span>
+                                
+                                <span class="text-xs font-black text-gray-700">
+                                    @if(app()->getLocale() === 'km')
+                                        <span class="font-km tracking-wide">ភាសាខ្មែរ</span>
+                                    @else
+                                        ENGLISH
+                                    @endif
+                                </span>
+                                
                                 <i class="fa-solid fa-chevron-down text-[10px] text-gray-400 transition-transform" :class="langOpen ? 'rotate-180' : ''"></i>
                             </button>
 
@@ -201,124 +210,131 @@
                                  x-transition:leave-start="transform opacity-100 scale-100"
                                  x-transition:leave-end="transform opacity-0 scale-95"
                                  class="absolute right-0 mt-2 w-44 rounded-xl border border-gray-100 bg-white p-2 shadow-xl z-50" style="display: none;">
+                                
                                 <a href="{{ route('language.switch', 'en') }}" class="flex items-center justify-between rounded-lg px-3 py-2 text-sm font-bold transition {{ app()->getLocale() === 'en' ? 'bg-red-50 text-red-600' : 'text-gray-700 hover:bg-gray-50' }}">
-                                    <span class="inline-flex items-center gap-2"><span>🇬🇧</span><span>{{ __('ui.english') }}</span></span>
-                                    <span class="text-[11px] font-black">EN</span>
+                                    <span class="inline-flex items-center gap-2"><span>🇬🇧</span><span>English</span></span>
                                 </a>
+                                
                                 <a href="{{ route('language.switch', 'km') }}" class="mt-1 flex items-center justify-between rounded-lg px-3 py-2 text-sm font-bold transition {{ app()->getLocale() === 'km' ? 'bg-red-50 text-red-600' : 'text-gray-700 hover:bg-gray-50' }}">
-                                    <span class="inline-flex items-center gap-2"><span>🇰🇭</span><span>{{ __('ui.khmer') }}</span></span>
-                                    <span class="text-[11px] font-black">KM</span>
+                                    <span class="inline-flex items-center gap-2"><span>🇰🇭</span><span class="font-km">ភាសាខ្មែរ</span></span>
                                 </a>
                             </div>
                         </div>
                     @endif
-                </div>
-
-                {{-- Mobile Menu Button & Notification --}}
-                <div class="md:hidden flex items-center gap-5">
-                    {{-- 🌟 DYNAMIC MOBILE NOTIFICATION BELL 🌟 --}}
-                    <div class="relative" @click.away="mobileNotifOpen = false">
-                        <button @click="mobileNotifOpen = !mobileNotifOpen" class="relative text-gray-500 hover:text-red-600 focus:outline-none transition-colors">
-                            <i class="fa-solid fa-bell text-xl"></i>
-                            <span x-show="unreadCount > 0" class="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full border-2 border-white bg-[#D32F2F] text-[8px] font-black text-white shadow-sm" x-text="unreadCount" style="display: none;"></span>
-                        </button>
-                        
-                        <div x-show="mobileNotifOpen" 
-                             x-transition:enter="transition ease-out duration-200"
-                             x-transition:enter-start="opacity-0 translate-y-2 scale-95"
-                             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                             style="display: none;" 
-                             class="absolute right-0 top-full mt-4 w-72 rounded-2xl border border-gray-100 bg-white shadow-xl z-50 overflow-hidden flex flex-col">
-                            
-                            <div class="flex items-center justify-between border-b border-gray-100 bg-gray-50/80 px-4 py-3">
-                                <h3 class="text-sm font-black text-gray-900">Notifications</h3>
-                                <button x-show="unreadCount > 0" @click="markAllAsRead()" class="text-[9px] font-bold text-[#D32F2F] uppercase tracking-wider">Mark all read</button>
-                            </div>
-
-                            <div class="max-h-72 overflow-y-auto divide-y divide-gray-50">
-                                <template x-for="notif in notifications" :key="notif.id">
-                                    <a :href="'/notifications/' + notif.id + '/read'" class="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
-                                        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors"
-                                             :class="notif.is_read ? 'bg-gray-100 text-gray-400' : 'bg-red-50 text-[#D32F2F]'">
-                                            <i class="fa-solid" :class="notif.icon"></i>
-                                        </div>
-                                        <div class="flex-1 space-y-0.5">
-                                            <p class="text-xs font-bold" :class="notif.is_read ? 'text-gray-500' : 'text-gray-900'" x-text="notif.title"></p>
-                                            <p class="text-[10px] text-gray-500 line-clamp-2" x-text="notif.message"></p>
-                                            <p class="text-[9px] font-bold mt-1" :class="notif.is_read ? 'text-gray-300' : 'text-gray-400'" x-text="notif.time"></p>
-                                        </div>
-                                        <div x-show="!notif.is_read" class="w-1.5 h-1.5 rounded-full bg-[#D32F2F] mt-1 shrink-0"></div>
-                                    </a>
-                                </template>
-                                <div x-show="notifications.length === 0" class="px-4 py-6 text-center">
-                                    <p class="text-xs font-bold text-gray-500">No new notifications.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="text-gray-600 hover:text-red-600 focus:outline-none transition-colors">
-                        <i class="fa-solid fa-bars text-2xl"></i>
-                    </button>
+                    
                 </div>
             </div>
 
-            {{-- Mobile Dropdown Menu --}}
-            <div x-show="mobileMenuOpen" 
-                 x-transition:enter="transition ease-out duration-200"
-                 x-transition:enter-start="opacity-0 -translate-y-2"
-                 x-transition:enter-end="opacity-100 translate-y-0"
-                 class="md:hidden mt-4 pb-4 border-t border-gray-100" style="display: none;">
-                <a href="{{ route('home') }}" class="block py-3 text-gray-600 hover:text-red-600 font-medium">{{ __('ui.home') }}</a>
-                <a href="{{ route('home') }}#requests" class="block py-3 text-gray-600 hover:text-red-600 font-medium">{{ __('ui.urgent_requests') }}</a>
+            {{-- Mobile Menu Button & Notification --}}
+            <div class="md:hidden flex items-center gap-5">
+                
+                {{-- DYNAMIC MOBILE NOTIFICATION BELL --}}
+                <div class="relative" @click.away="mobileNotifOpen = false">
+                    <button @click="mobileNotifOpen = !mobileNotifOpen" class="relative text-gray-500 hover:text-red-600 focus:outline-none transition-colors">
+                        <i class="fa-solid fa-bell text-xl"></i>
+                        <span x-show="unreadCount > 0" class="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full border-2 border-white bg-[#D32F2F] text-[8px] font-black text-white shadow-sm" x-text="unreadCount" style="display: none;"></span>
+                    </button>
+                    
+                    <div x-show="mobileNotifOpen" 
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                         x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                         style="display: none;" 
+                         class="absolute right-0 top-full mt-4 w-72 rounded-2xl border border-gray-100 bg-white shadow-xl z-50 overflow-hidden flex flex-col">
+                        
+                        <div class="flex items-center justify-between border-b border-gray-100 bg-gray-50/80 px-4 py-3">
+                            <h3 class="text-sm font-black text-gray-900">Notifications</h3>
+                            <button x-show="unreadCount > 0" @click="markAllAsRead()" class="text-[9px] font-bold text-[#D32F2F] uppercase tracking-wider">Mark all read</button>
+                        </div>
 
-                @if(($settings['enable_language_switcher'] ?? '1') === '1')
-                    <div class="flex items-center gap-2 py-3">
-                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wide">{{ __('ui.language') }}</span>
-                        <a href="{{ route('language.switch', 'en') }}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition {{ app()->getLocale() === 'en' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600' }}"><span>🇬🇧</span><span>EN</span></a>
-                        <a href="{{ route('language.switch', 'km') }}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition {{ app()->getLocale() === 'km' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600' }}"><span>🇰🇭</span><span>KM</span></a>
+                        <div class="max-h-72 overflow-y-auto divide-y divide-gray-50">
+                            <template x-for="notif in notifications" :key="notif.id">
+                                <a :href="'/notifications/' + notif.id + '/read'" class="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
+                                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors"
+                                         :class="notif.is_read ? 'bg-gray-100 text-gray-400' : 'bg-red-50 text-[#D32F2F]'">
+                                        <i class="fa-solid" :class="notif.icon"></i>
+                                    </div>
+                                    <div class="flex-1 space-y-0.5">
+                                        <p class="text-xs font-bold" :class="notif.is_read ? 'text-gray-500' : 'text-gray-900'" x-text="notif.title"></p>
+                                        <p class="text-[10px] text-gray-500 line-clamp-2" x-text="notif.message"></p>
+                                        <p class="text-[9px] font-bold mt-1" :class="notif.is_read ? 'text-gray-300' : 'text-gray-400'" x-text="notif.time"></p>
+                                    </div>
+                                    <div x-show="!notif.is_read" class="w-1.5 h-1.5 rounded-full bg-[#D32F2F] mt-1 shrink-0"></div>
+                                </a>
+                            </template>
+                            <div x-show="notifications.length === 0" class="px-4 py-6 text-center">
+                                <p class="text-xs font-bold text-gray-500">No new notifications.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button @click="mobileMenuOpen = !mobileMenuOpen" class="text-gray-600 hover:text-red-600 focus:outline-none transition-colors">
+                    <i class="fa-solid fa-bars text-2xl"></i>
+                </button>
+            </div>
+        </div>
+
+        {{-- Mobile Dropdown Menu --}}
+        <div x-show="mobileMenuOpen" 
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 -translate-y-2"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             class="md:hidden mt-4 pb-4 border-t border-gray-100" style="display: none;">
+            <a href="{{ route('home') }}" class="block py-3 px-6 text-gray-600 hover:text-red-600 font-medium">{{ __('ui.home') }}</a>
+            <a href="{{ route('home') }}#requests" class="block py-3 px-6 text-gray-600 hover:text-red-600 font-medium">{{ __('ui.urgent_requests') }}</a>
+
+            @if(($settings['enable_language_switcher'] ?? '1') === '1')
+                <div class="flex flex-col gap-2 py-3 px-6 border-b border-gray-100">
+                    <span class="text-xs font-bold text-gray-500 uppercase tracking-wide">Language</span>
+                    <div class="flex items-center gap-2">
+                        <a href="{{ route('language.switch', 'en') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition {{ app()->getLocale() === 'en' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600' }}"><span>🇬🇧</span><span>English</span></a>
+                        <a href="{{ route('language.switch', 'km') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition {{ app()->getLocale() === 'km' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600' }}"><span>🇰🇭</span><span class="font-km">ភាសាខ្មែរ</span></a>
+                    </div>
+                </div>
+            @endif
+            
+            @auth
+                @if(auth()->user()->usertype === 'admin')
+                    <div class="py-3 mt-2 px-6">
+                        <a href="{{ route('admin.dashboard') }}" class="block py-2 text-slate-900 font-black"><i class="fa-solid fa-shield-halved mr-2"></i> {{ __('ui.admin_portal') }}</a>
+                        <form action="{{ route('logout') }}" method="POST">
+                            @csrf
+                            <button class="text-gray-500 hover:text-red-600 font-medium w-full text-left py-2">{{ __('ui.logout') }}</button>
+                        </form>
+                    </div>
+                @else
+                    <a href="{{ route('user.requests.create') }}" class="block py-3 px-6 text-red-600 font-bold">{{ __('ui.request_blood') }}</a>
+                    <div class="py-3 mt-2 px-6">
+                        <div class="flex items-center mb-3">
+                            @if(auth()->user()->avatar)
+                                <img src="{{ asset('storage/' . auth()->user()->avatar) }}" class="w-8 h-8 rounded-full object-cover mr-2 border border-red-100">
+                            @else
+                                <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mr-2 text-gray-400"><i class="fa-solid fa-user"></i></div>
+                            @endif
+                            <div class="flex flex-col">
+                                <span class="font-bold text-gray-800 leading-tight">{{ auth()->user()->name }}</span>
+                                <span class="text-[10px] font-bold text-red-500 uppercase tracking-wider">{{ auth()->user()->blood_type ?? __('ui.not_available') }} {{ __('ui.donor') }}</span>
+                            </div>
+                        </div>
+                        <a href="{{ route('user.dashboard') }}" class="block py-2 text-gray-600 hover:text-red-600 font-medium">{{ __('ui.my_dashboard') }}</a>
+                        <a href="{{ route('user.profile') }}" class="block py-2 text-gray-600 hover:text-red-600 font-medium">{{ __('ui.profile_settings') }}</a>
+                        <form action="{{ route('logout') }}" method="POST">
+                            @csrf
+                            <button class="text-gray-500 hover:text-red-600 font-medium w-full text-left py-2">{{ __('ui.logout') }}</button>
+                        </form>
                     </div>
                 @endif
-                
-                @auth
-                    @if(auth()->user()->usertype === 'admin')
-                        <div class="py-3 border-t border-gray-100 mt-2">
-                            <a href="{{ route('admin.dashboard') }}" class="block py-2 text-slate-900 font-black"><i class="fa-solid fa-shield-halved mr-2"></i> {{ __('ui.admin_portal') }}</a>
-                            <form action="{{ route('logout') }}" method="POST">
-                                @csrf
-                                <button class="text-gray-500 hover:text-red-600 font-medium w-full text-left py-2">{{ __('ui.logout') }}</button>
-                            </form>
-                        </div>
-                    @else
-                        <a href="{{ route('user.requests.create') }}" class="block py-3 text-red-600 font-bold">{{ __('ui.request_blood') }}</a>
-                        <div class="py-3 border-t border-gray-100 mt-2">
-                            <div class="flex items-center mb-3">
-                                @if(auth()->user()->avatar)
-                                    <img src="{{ asset('storage/' . auth()->user()->avatar) }}" class="w-8 h-8 rounded-full object-cover mr-2 border border-red-100">
-                                @else
-                                    <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mr-2 text-gray-400"><i class="fa-solid fa-user"></i></div>
-                                @endif
-                                <div class="flex flex-col">
-                                    <span class="font-bold text-gray-800 leading-tight">{{ auth()->user()->name }}</span>
-                                    <span class="text-[10px] font-bold text-red-500 uppercase tracking-wider">{{ auth()->user()->blood_type ?? __('ui.not_available') }} {{ __('ui.donor') }}</span>
-                                </div>
-                            </div>
-                            <a href="{{ route('user.dashboard') }}" class="block py-2 text-gray-600 hover:text-red-600 font-medium">{{ __('ui.my_dashboard') }}</a>
-                            <a href="{{ route('user.profile') }}" class="block py-2 text-gray-600 hover:text-red-600 font-medium">{{ __('ui.profile_settings') }}</a>
-                            <form action="{{ route('logout') }}" method="POST">
-                                @csrf
-                                <button class="text-gray-500 hover:text-red-600 font-medium w-full text-left py-2">{{ __('ui.logout') }}</button>
-                            </form>
-                        </div>
-                    @endif
-                @else
-                    <a href="{{ route('user.requests.create') }}" class="block py-3 text-red-600 font-bold">{{ __('ui.request_blood') }}</a>
-                    <div class="flex flex-col gap-3 mt-4 border-t border-gray-100 pt-4">
-                        <a href="{{ route('user.login') }}" class="text-center w-full py-3 border border-gray-200 rounded-xl font-bold text-gray-600">{{ __('ui.login') }}</a>
-                        <a href="{{ route('register') }}" class="text-center w-full py-3 bg-red-600 text-white rounded-xl font-bold shadow-md">{{ __('ui.register') }}</a>
-                    </div>
-                @endauth
-            </div>
+            @else
+                <a href="{{ route('user.requests.create') }}" class="block py-3 px-6 text-red-600 font-bold">{{ __('ui.request_blood') }}</a>
+                <div class="flex flex-col gap-3 mt-4 border-t border-gray-100 pt-4 px-6">
+                    {{-- 🌟 RESTORED MOBILE LOGIN ICON 🌟 --}}
+                    <a href="{{ route('user.login') }}" class="flex justify-center items-center gap-2 w-full py-3 border border-gray-200 rounded-xl font-bold text-gray-600">
+                        <i class="fa-solid fa-right-to-bracket"></i> {{ __('ui.login') }}
+                    </a>
+                    <a href="{{ route('register') }}" class="text-center w-full py-3 bg-red-600 text-white rounded-xl font-bold shadow-md">{{ __('ui.register') }}</a>
+                </div>
+            @endauth
         </div>
     </nav>
 
@@ -347,12 +363,10 @@
                 {{ __('ui.emergency_response') }}
             </span>
             
-            {{-- DYNAMIC HEADLINE --}}
             <h1 class="text-4xl md:text-6xl font-black mb-6 leading-tight">
                 {{ $headline }}
             </h1>
             
-            {{-- DYNAMIC SUBTITLE --}}
             <p class="text-lg md:text-xl mb-10 text-red-100 font-medium">
                 {{ $subtitle }}
             </p>
@@ -374,7 +388,6 @@
     <div id="requests" class="container mx-auto px-6 py-16 flex-grow" 
          x-data="{ 
             isLoading: false,
-            // Check URL on load to show/hide clear button
             hasFilter: new URLSearchParams(window.location.search).has('blood_type'),
             async performSearch(event) {
                 this.isLoading = true;
@@ -391,7 +404,6 @@
                     document.getElementById('requests-grid').innerHTML = doc.getElementById('requests-grid').innerHTML;
                     window.history.pushState({}, '', url);
                     
-                    // Show Clear Button
                     this.hasFilter = true;
                 } catch (error) {
                     console.error('Search failed:', error);
@@ -401,7 +413,7 @@
             },
             async clearFilters() {
                 this.isLoading = true;
-                const url = `{{ route('home') }}`; // Reset to clean home URL
+                const url = `{{ route('home') }}`;
                 try {
                     const response = await fetch(url);
                     const html = await response.text();
@@ -411,7 +423,6 @@
                     document.getElementById('requests-grid').innerHTML = doc.getElementById('requests-grid').innerHTML;
                     window.history.pushState({}, '', url);
                     
-                    // Reset UI
                     document.querySelector('select[name=\'blood_type\']').value = '';
                     this.hasFilter = false;
                 } finally {
@@ -442,11 +453,11 @@
                 <div class="absolute -inset-1 bg-gradient-to-r from-red-600 to-red-400 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-200"></div>
                 <div class="relative flex bg-white rounded-xl shadow-lg overflow-hidden p-2">
                     
-                    {{-- Dropdown Wrapper --}}
                     <div class="flex-grow relative border-r border-gray-100">
                         <i class="fa-solid fa-droplet text-red-500 absolute left-4 top-1/2 transform -translate-y-1/2 text-lg"></i>
                         <select name="blood_type" class="w-full bg-transparent border-none pl-12 pr-10 py-3 outline-none appearance-none font-bold text-gray-700 cursor-pointer h-full">
                             <option value="">{{ __('ui.filter_by_blood_type') }}</option>
+                            <option value="Any" {{ request('blood_type') == 'Any' ? 'selected' : '' }}>Any</option>
                             <option value="A+" {{ request('blood_type') == 'A+' ? 'selected' : '' }}>A+</option>
                             <option value="A-" {{ request('blood_type') == 'A-' ? 'selected' : '' }}>A-</option>
                             <option value="B+" {{ request('blood_type') == 'B+' ? 'selected' : '' }}>B+</option>
@@ -459,7 +470,6 @@
                         <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none text-xs"></i>
                     </div>
                     
-                    {{-- Search Button --}}
                     <button type="submit" :disabled="isLoading" class="bg-red-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-red-700 transition flex items-center ml-2 shadow-md disabled:opacity-75 disabled:cursor-not-allowed">
                         <span x-show="!isLoading">{{ __('ui.search') }}</span>
                         <span x-show="isLoading" class="flex items-center" style="display: none;">
@@ -469,7 +479,6 @@
                 </div>
             </form>
             
-            {{-- CLEAR FILTERS BUTTON --}}
             <div class="text-center mt-4" x-show="hasFilter" style="display: none;">
                 <button @click="clearFilters" :disabled="isLoading" class="text-sm font-bold text-gray-400 hover:text-red-600 transition flex items-center justify-center gap-2 mx-auto disabled:opacity-50">
                     <i class="fa-solid fa-times-circle"></i> Clear Filters
@@ -492,10 +501,8 @@
                     @foreach($requests as $req)
                     <div class="bg-white rounded-[1.5rem] p-6 border border-gray-100 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] hover:shadow-[0_10px_40px_-10px_rgba(0,0,0,0.12)] transition-all duration-300 flex flex-col h-full relative overflow-hidden group">
                         
-                        {{-- Top Accent Line --}}
                         <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 to-red-600"></div>
 
-                        {{-- Header: Badge, Hospital & Blood Type --}}
                         <div class="flex justify-between items-start mb-6 pt-2">
                             <div class="pr-3">
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-50 text-red-600 text-[10px] font-bold uppercase tracking-wider mb-2 border border-red-100/50">
@@ -509,9 +516,7 @@
                             </div>
                         </div>
 
-                        {{-- Patient & Contact Info --}}
                         <div class="space-y-4 mb-6 flex-grow">
-                            {{-- Patient --}}
                             <div class="flex items-start gap-3">
                                 <div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100 mt-0.5 group-hover:bg-red-50 group-hover:text-red-500 transition-colors">
                                     <i class="fa-solid fa-user-injured text-xs"></i>
@@ -522,7 +527,6 @@
                                 </div>
                             </div>
 
-                            {{-- Phone --}}
                             <div class="flex items-start gap-3">
                                 <div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100 mt-0.5 group-hover:bg-red-50 group-hover:text-red-500 transition-colors">
                                     <i class="fa-solid fa-phone text-xs"></i>
@@ -534,7 +538,6 @@
                             </div>
                         </div>
 
-                        {{-- Info Pills (Location & Units) --}}
                         <div class="flex flex-wrap gap-2 mb-6">
                             <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 text-gray-700 text-xs font-bold border border-gray-100">
                                 <i class="fa-solid fa-droplet text-red-500"></i> {{ $req->units_needed ?? '1' }} Bag(s)
@@ -544,10 +547,8 @@
                             </div>
                         </div>
 
-                        {{-- Footer: Dates, Requester & Buttons --}}
                         <div class="pt-5 border-t border-gray-100 mt-auto">
                             
-                            {{-- Added Requested By under Needed By --}}
                             <div class="space-y-3 mb-5">
                                 <div class="flex items-center justify-between">
                                     <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{{ __('ui.needed_by') }}</span>
@@ -563,7 +564,6 @@
                                     <i class="fa-solid fa-phone"></i> {{ __('ui.call') }}
                                 </a>
                                 
-                                {{-- Primary Action Button --}}
                                 <a href="{{ auth()->check() ? route('user.donate') : route('user.login') }}" class="flex-1 bg-red-600 text-white flex items-center justify-center gap-2 rounded-xl font-bold text-sm hover:bg-red-700 transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 border border-transparent">
                                     <i class="fa-solid fa-hand-holding-medical"></i> {{ __('ui.i_can_donate') }}
                                 </a>
@@ -574,7 +574,6 @@
                     @endforeach
                 </div>
                 
-                {{-- Pagination --}}
                 <div class="mt-12 flex justify-end">
                     {{ $requests->appends(request()->query())->fragment('requests')->links() }}
                 </div>
@@ -605,12 +604,10 @@
                 <div>
                     <h4 class="font-bold text-white mb-6">{{ __('ui.contact') }}</h4>
                     <ul class="space-y-4 text-sm text-gray-400">
-                        {{-- DYNAMIC EMAIL --}}
                         <li class="flex items-start">
                             <i class="fa-solid fa-envelope mt-1 mr-3 text-red-500"></i> 
                             {{ $settings['support_email'] ?? 'support@bloodshare.kh' }}
                         </li>
-                        {{-- DYNAMIC LOCATION --}}
                         <li class="flex items-start">
                             <i class="fa-solid fa-location-dot mt-1 mr-3 text-red-500"></i> 
                             {{ $settings['office_location'] ?? 'Phnom Penh, Cambodia' }}
@@ -621,11 +618,9 @@
             <div class="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
                 <p class="text-xs text-gray-500">&copy; 2026 BloodShare KH. {{ __('ui.all_rights_reserved') }}</p>
                 <div class="flex gap-4 mt-4 md:mt-0">
-                    {{-- DYNAMIC FACEBOOK LINK --}}
                     <a href="{{ $settings['facebook_link'] ?? '#' }}" class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white transition" target="_blank">
                         <i class="fa-brands fa-facebook-f"></i>
                     </a>
-                    {{-- DYNAMIC TELEGRAM LINK --}}
                     <a href="{{ $settings['telegram_link'] ?? '#' }}" class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white transition" target="_blank">
                         <i class="fa-brands fa-telegram"></i>
                     </a>

@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('email')->nullable()->unique();
             $table->string('password')->nullable(); // Nullable for OTP-only flows
             $table->string('usertype')->default('user');
-            $table->enum('blood_type', ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'All'])->nullable();
+            $table->enum('blood_type', ['Any', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'All'])->nullable();
 
             // KYC / Identity Verification
             $table->string('id_number')->nullable(); // Passport or National ID

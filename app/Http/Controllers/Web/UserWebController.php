@@ -246,7 +246,7 @@ class UserWebController extends Controller
             'blood_type' => 'required',
             'quantity' => 'required',
             'hospital_name' => 'required',
-            'needed_date' => 'required|date|after:today',
+            'needed_date' => 'required|date|after_or_equal:today',
         ]);
 
         // Save the request and assign it to a variable so we can use its data
@@ -405,7 +405,7 @@ class UserWebController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|max:255|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:20|unique:users,phone,' . $user->id,
-            'blood_type' => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-,All',
+            'blood_type' => 'nullable|in:Any,A+,A-,B+,B-,AB+,AB-,O+,O-,All',
             'current_password' => 'nullable|required_with:password|current_password',
             'password' => 'nullable|min:6|confirmed',
             'avatar' => 'nullable|image|max:2048', 

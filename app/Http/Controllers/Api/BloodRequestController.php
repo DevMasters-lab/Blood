@@ -16,7 +16,7 @@ class BloodRequestController extends Controller
             ->where('status', 'open');
 
         // Optional: Filter by Blood Type
-        if ($request->has('blood_type')) {
+        if ($request->has('blood_type') && $request->blood_type !== 'Any' && !empty($request->blood_type)) {
             $query->where('blood_type', $request->blood_type);
         }
 
@@ -35,7 +35,7 @@ class BloodRequestController extends Controller
     {
         // 1. Validate
         $request->validate([
-            'blood_type' => 'required|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
+            'blood_type' => 'required|in:Any,A+,A-,B+,B-,AB+,AB-,O+,O-',
             'quantity' => 'required|string',     // e.g. "2 Bags"
             'hospital_name' => 'required|string',
             'needed_date' => 'required|date|after_or_equal:today',

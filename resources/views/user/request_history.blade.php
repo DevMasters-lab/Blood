@@ -60,7 +60,7 @@
                     <div class="flex-1 min-w-[170px] border-b lg:border-b-0 lg:border-r border-gray-200">
                         <select name="blood_type" class="w-full bg-transparent px-4 py-3 text-sm font-semibold text-gray-700 outline-none cursor-pointer">
                             <option value="">Blood Type: All</option>
-                            @foreach(['A+','A-','B+','B-','O+','O-','AB+','AB-'] as $type)
+                            @foreach(['Any','A+','A-','B+','B-','O+','O-','AB+','AB-'] as $type)
                                 <option value="{{ $type }}" {{ request('blood_type') === $type ? 'selected' : '' }}>Blood Type: {{ $type }}</option>
                             @endforeach
                         </select>

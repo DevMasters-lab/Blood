@@ -41,7 +41,7 @@
                 <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Blood Type (Optional)</label>
                 <select name="blood_type" class="w-full bg-gray-50 border border-gray-100 p-4 rounded-xl focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none transition-all font-bold text-gray-800 appearance-none cursor-pointer">
                     <option value="" selected>I'm not sure / Leave blank</option>
-                    @foreach(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as $type)
+                    @foreach(['Any','A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as $type)
                         <option value="{{ $type }}">{{ $type }}</option>
                     @endforeach
                 </select>

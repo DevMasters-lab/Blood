@@ -9,6 +9,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
+    {{-- Google Fonts: Kantumruy Pro (Loaded but only applied via .font-km) --}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
+
     <style>
         html, body { overflow: hidden !important; height: 100% !important; margin: 0; padding: 0; background-color: #ffffff; }
         #register-root { position: fixed; inset: 0; width: 100%; height: 100%; display: flex; z-index: 40; overflow: hidden; }
@@ -38,9 +43,11 @@
         .delay-7 { animation-delay: .47s; }
         .delay-8 { animation-delay: .54s; }
         .inp:focus { box-shadow: 0 0 0 4px rgba(198,40,40,.12); }
+        
+        .font-km { font-family: 'Kantumruy Pro', sans-serif !important; }
     </style>
 </head>
-<body>
+<body class="font-sans {{ app()->getLocale() === 'km' ? 'font-km' : '' }}">
 
 <div id="register-root" class="flex-col lg:flex-row">
     <div class="hidden lg:flex w-[48%] flex-col justify-center items-center relative overflow-hidden" style="background: linear-gradient(150deg, #d32f2f 0%, #b71c1c 55%, #7f0000 100%);">
@@ -100,24 +107,35 @@
                 <i class="fa-solid fa-arrow-left"></i> {{ __('ui.home') ?? 'Home' }}
             </a>
 
+            {{-- 🌟 UPDATED LANGUAGE SWITCHER 🌟 --}}
             <div class="relative" x-data="{ langOpen: false }" @click.away="langOpen = false">
                 <button @click="langOpen = !langOpen" class="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white pl-2 pr-3 py-1.5 shadow-sm hover:border-red-200 hover:bg-red-50/40 transition">
                     <span class="flex h-7 w-7 items-center justify-center rounded-full bg-red-50 text-red-500">
                         <i class="fa-solid fa-globe text-xs"></i>
                     </span>
-                    <span class="text-xs font-black text-gray-700 uppercase">{{ app()->getLocale() }}</span>
+                    
+                    {{-- Text Display: English / ភាសាខ្មែរ --}}
+                    <span class="text-xs font-black text-gray-700">
+                        @if(app()->getLocale() === 'km')
+                            <span class="font-km tracking-wide">ភាសាខ្មែរ</span>
+                        @else
+                            ENGLISH
+                        @endif
+                    </span>
+                    
                     <i class="fa-solid fa-chevron-down text-[10px] text-gray-400 transition-transform" :class="langOpen ? 'rotate-180' : ''"></i>
                 </button>
 
                 <div x-show="langOpen" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95" class="absolute right-0 mt-2 w-44 rounded-xl border border-gray-100 bg-white p-2 shadow-xl z-50" style="display: none;">
+                    
                     <a href="{{ route('language.switch', 'en') }}" class="flex items-center justify-between rounded-lg px-3 py-2 text-sm font-bold transition {{ app()->getLocale() === 'en' ? 'bg-red-50 text-red-600' : 'text-gray-700 hover:bg-gray-50' }}">
                         <span class="inline-flex items-center gap-2"><span>🇬🇧</span><span>English</span></span>
-                        <span class="text-[11px] font-black">EN</span>
                     </a>
+                    
                     <a href="{{ route('language.switch', 'km') }}" class="mt-1 flex items-center justify-between rounded-lg px-3 py-2 text-sm font-bold transition {{ app()->getLocale() === 'km' ? 'bg-red-50 text-red-600' : 'text-gray-700 hover:bg-gray-50' }}">
-                        <span class="inline-flex items-center gap-2"><span>🇰🇭</span><span>Khmer</span></span>
-                        <span class="text-[11px] font-black">KM</span>
+                        <span class="inline-flex items-center gap-2"><span>🇰🇭</span><span class="font-km">ភាសាខ្មែរ</span></span>
                     </a>
+                    
                 </div>
             </div>
         </div>

@@ -5,7 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | BloodShare KH</title>
     
-    {{-- Tailwind, FontAwesome & Alpine.js (Added for Dropdown) --}}
+    {{-- Google Fonts: Kantumruy Pro (Loaded but only applied via .font-km) --}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
+    
+    {{-- Tailwind, FontAwesome & Alpine.js --}}
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -89,9 +94,12 @@
 
         /* ── Input focus glow ── */
         .inp:focus { box-shadow: 0 0 0 4px rgba(198,40,40,.12); }
+        
+        /* This ensures Khmer font is ONLY applied where the .font-km class exists */
+        .font-km { font-family: 'Kantumruy Pro', sans-serif !important; }
     </style>
 </head>
-<body>
+<body class="font-sans {{ app()->getLocale() === 'km' ? 'font-km' : '' }}">
 
 <div id="login-root" class="flex-col lg:flex-row">
 
@@ -188,13 +196,22 @@
                 <i class="fa-solid fa-arrow-left"></i> {{ __('ui.home') ?? 'Home' }}
             </a>
 
-            {{-- Dropdown Switcher --}}
+            {{-- 🌟 UPDATED: Dropdown Switcher 🌟 --}}
             <div class="relative" x-data="{ langOpen: false }" @click.away="langOpen = false">
                 <button @click="langOpen = !langOpen" class="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white pl-2 pr-3 py-1.5 shadow-sm hover:border-red-200 hover:bg-red-50/40 transition">
                     <span class="flex h-7 w-7 items-center justify-center rounded-full bg-red-50 text-red-500">
                         <i class="fa-solid fa-globe text-xs"></i>
                     </span>
-                    <span class="text-xs font-black text-gray-700 uppercase">{{ app()->getLocale() }}</span>
+                    
+                    {{-- Show Full Name Instead of KM/EN --}}
+                    <span class="text-xs font-black text-gray-700">
+                        @if(app()->getLocale() === 'km')
+                            <span class="font-km tracking-wide">ភាសាខ្មែរ</span>
+                        @else
+                            ENGLISH
+                        @endif
+                    </span>
+                    
                     <i class="fa-solid fa-chevron-down text-[10px] text-gray-400 transition-transform" :class="langOpen ? 'rotate-180' : ''"></i>
                 </button>
 
@@ -207,14 +224,12 @@
                      x-transition:leave-end="transform opacity-0 scale-95"
                      class="absolute right-0 mt-2 w-44 rounded-xl border border-gray-100 bg-white p-2 shadow-xl z-50" style="display: none;">
                     
-                    {{-- Note: Change 'language.switch' below to 'lang.switch' if that is what your route is named in web.php --}}
                     <a href="{{ route('language.switch', 'en') }}" class="flex items-center justify-between rounded-lg px-3 py-2 text-sm font-bold transition {{ app()->getLocale() === 'en' ? 'bg-red-50 text-red-600' : 'text-gray-700 hover:bg-gray-50' }}">
                         <span class="inline-flex items-center gap-2"><span>🇬🇧</span><span>English</span></span>
-                        <span class="text-[11px] font-black">EN</span>
                     </a>
+                    
                     <a href="{{ route('language.switch', 'km') }}" class="mt-1 flex items-center justify-between rounded-lg px-3 py-2 text-sm font-bold transition {{ app()->getLocale() === 'km' ? 'bg-red-50 text-red-600' : 'text-gray-700 hover:bg-gray-50' }}">
-                        <span class="inline-flex items-center gap-2"><span>🇰🇭</span><span>Khmer</span></span>
-                        <span class="text-[11px] font-black">KM</span>
+                        <span class="inline-flex items-center gap-2"><span>🇰🇭</span><span class="font-km">ភាសាខ្មែរ</span></span>
                     </a>
                 </div>
             </div>

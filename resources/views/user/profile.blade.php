@@ -89,7 +89,7 @@
                     <label class="block text-sm font-bold text-gray-900 mb-2">{{ __('ui.blood_type') }}</label>
                     <select name="blood_type" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none appearance-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all font-medium text-gray-800 cursor-pointer">
                         <option value="">{{ __('ui.select_blood_type') }}</option>
-                        @foreach(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'All'] as $type)
+                        @foreach(['Any','A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as $type)
                             <option value="{{ $type }}" {{ old('blood_type', $user->blood_type) === $type ? 'selected' : '' }}>{{ $type }}</option>
                         @endforeach
                     </select>

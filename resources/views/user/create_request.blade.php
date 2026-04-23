@@ -33,7 +33,7 @@
         <form action="{{ route('user.requests.store') }}" method="POST" class="p-8 md:p-10">
             @csrf
             
-            {{-- 🌟 NEW: Hidden input to send the device UUID to the controller 🌟 --}}
+            {{-- Hidden input for device UUID --}}
             <input type="hidden" name="device_uuid" id="device_uuid_input">
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -42,16 +42,17 @@
                 <div>
                     <label class="block text-sm font-bold text-gray-900 mb-2">{{ __('ui.blood_type_needed') }}</label>
                     <div class="relative">
-                        <select name="blood_type" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none appearance-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all font-bold text-gray-800 cursor-pointer">
-                            <option value="" disabled selected>{{ __('ui.select_blood_type') }}</option>
-                            <option value="A+">A+</option>
-                            <option value="A-">A-</option>
-                            <option value="B+">B+</option>
-                            <option value="B-">B-</option>
-                            <option value="O+">O+</option>
-                            <option value="O-">O-</option>
-                            <option value="AB+">AB+</option>
-                            <option value="AB-">AB-</option>
+                        <select name="blood_type" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none appearance-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all font-bold text-gray-800 cursor-pointer @error('blood_type') border-red-400 bg-red-50 @enderror">
+                            <option value="" disabled {{ old('blood_type') ? '' : 'selected' }}>{{ __('ui.select_blood_type') }}</option>
+                            <option value="Any" {{ old('blood_type') == 'Any' ? 'selected' : '' }}>Any</option>
+                            <option value="A+" {{ old('blood_type') == 'A+' ? 'selected' : '' }}>A+</option>
+                            <option value="A-" {{ old('blood_type') == 'A-' ? 'selected' : '' }}>A-</option>
+                            <option value="B+" {{ old('blood_type') == 'B+' ? 'selected' : '' }}>B+</option>
+                            <option value="B-" {{ old('blood_type') == 'B-' ? 'selected' : '' }}>B-</option>
+                            <option value="O+" {{ old('blood_type') == 'O+' ? 'selected' : '' }}>O+</option>
+                            <option value="O-" {{ old('blood_type') == 'O-' ? 'selected' : '' }}>O-</option>
+                            <option value="AB+" {{ old('blood_type') == 'AB+' ? 'selected' : '' }}>AB+</option>
+                            <option value="AB-" {{ old('blood_type') == 'AB-' ? 'selected' : '' }}>AB-</option>
                         </select>
                         <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none text-sm"></i>
                     </div>
@@ -60,7 +61,7 @@
                 {{-- Quantity --}}
                 <div>
                     <label class="block text-sm font-bold text-gray-900 mb-2">{{ __('ui.quantity') }}</label>
-                    <input type="text" name="quantity" placeholder="{{ __('ui.quantity_example') }}" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all font-medium text-gray-800" required>
+                    <input type="text" name="quantity" value="{{ old('quantity') }}" placeholder="{{ __('ui.quantity_example') }}" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all font-medium text-gray-800 @error('quantity') border-red-400 bg-red-50 @enderror" required>
                 </div>
 
                 {{-- Hospital Name --}}
@@ -68,14 +69,14 @@
                     <label class="block text-sm font-bold text-gray-900 mb-2">{{ __('ui.hospital_name') }}</label>
                     <div class="relative">
                         <i class="fa-regular fa-hospital absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                        <input type="text" name="hospital_name" placeholder="{{ __('ui.where_blood_needed') }}" class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-4 py-3 outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all font-medium text-gray-800" required>
+                        <input type="text" name="hospital_name" value="{{ old('hospital_name') }}" placeholder="{{ __('ui.where_blood_needed') }}" class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-4 py-3 outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all font-medium text-gray-800 @error('hospital_name') border-red-400 bg-red-50 @enderror" required>
                     </div>
                 </div>
 
                 {{-- Date Needed --}}
                 <div class="md:col-span-2">
                     <label class="block text-sm font-bold text-gray-900 mb-2">{{ __('ui.date_needed') }}</label>
-                    <input type="date" name="needed_date" min="{{ date('Y-m-d') }}" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all font-medium text-gray-800 cursor-pointer" required>
+                    <input type="date" name="needed_date" value="{{ old('needed_date') }}" min="{{ date('Y-m-d') }}" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all font-medium text-gray-800 cursor-pointer @error('needed_date') border-red-400 bg-red-50 @enderror" required>
                 </div>
             </div>
 
@@ -88,7 +89,6 @@
     </div>
 </div>
 
-{{-- 🌟 NEW: Script to grab the UUID from memory and put it in the hidden input 🌟 --}}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         let uuid = localStorage.getItem('device_uuid');
