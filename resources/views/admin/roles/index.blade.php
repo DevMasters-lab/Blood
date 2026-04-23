@@ -18,8 +18,14 @@
 
 @php
     $adminUser = auth('admin')->user();
-    $isSuperAdminUser = $adminUser?->hasRole('Super Admin');
-    $can = fn (string $permission): bool => $adminUser && ($isSuperAdminUser || $adminUser->hasPermissionTo($permission, 'web'));
+
+    $isSuperAdminUser = $adminUser
+        ? $adminUser->hasRole('Super Admin', 'web')
+        : false;
+
+    $can = fn (string $permission): bool => $adminUser && (
+        $isSuperAdminUser || $adminUser->checkPermissionTo($permission, 'web')
+    );
 @endphp
 
 <div class="space-y-6 animate-fade-in px-8 py-8">
