@@ -10,10 +10,8 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Create roles and permissions first
         $this->call(PermissionSeeder::class);
 
-        // 1. Super Admin
         $superAdmin = User::updateOrCreate(
             ['email' => 'admin@bloodshare.kh'],
             [
@@ -28,7 +26,6 @@ class DatabaseSeeder extends Seeder
 
         $superAdmin->syncRoles(['Super Admin']);
 
-        // 2. Test normal user
         User::updateOrCreate(
             ['email' => 'sokha@bloodshare.kh'],
             [

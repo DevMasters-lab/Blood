@@ -3,44 +3,41 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\User;
-use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 
-class DatabaseSeeder extends Seeder
+class PermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        // Create roles and permissions first
-        $this->call(PermissionSeeder::class);
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // 1. Super Admin
-        $superAdmin = User::updateOrCreate(
-            ['email' => 'admin@bloodshare.kh'],
-            [
-                'name' => 'Super Admin',
-                'phone' => '015916217',
-                'password' => Hash::make('123456'),
-                'usertype' => 'admin',
-                'status' => 'active',
-                'kyc_status' => 'verified',
-            ]
-        );
+        $permissions = [
+            'view_dashboard',
+            'view_reports',
+            'view_requests',
+            'view_history',
+            'view_invoices',
+            'view_users',
+            'view_kyc',
+            'view_account',
+            'view_settings',
+            'view_roles',
+            'create_roles',
+            'edit_roles',
+            'delete_roles',
+            'manage_permissions',
+            'manage_admins',
+        ];
 
-        $superAdmin->syncRoles(['Super Admin']);
+        foreach ($permissions as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
 
-        // 2. Test normal user
-        User::updateOrCreate(
-            ['email' => 'sokha@bloodshare.kh'],
-            [
-                'name' => 'Sokha Developer',
-                'phone' => '0123456789',
-                'password' => Hash::make('123456'),
-                'usertype' => 'user',
-                'status' => 'active',
-                'id_number' => 'KH-123456789',
-                'kyc_status' => 'verified',
-                'blood_type' => 'O+',
-            ]
-        );
+        $superAdminRole = Role::findOrCreate('Super Admin', 'web');
+        $superAdminRole->syncPermissions($permissions);
+
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
     }
 }
