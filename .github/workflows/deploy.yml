@@ -17,8 +17,8 @@ jobs:
       - name: Pull latest code into Blood_Production directory
         run: |
           cd /var/www/Blood_Production  
-          git fetch origin main    
-          git reset --hard origin/main 
+          git fetch origin master    
+          git reset --hard origin/master 
           
       - name: Fix Storage Permissions
         run: |
