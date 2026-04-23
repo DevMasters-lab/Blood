@@ -24,20 +24,42 @@
 <body class="bg-[#FAFAFA] font-sans text-[#1A1C1E] {{ app()->getLocale() === 'km' ? 'font-km' : '' }}">
     @php
         $adminUser = auth('admin')->user();
-        $isSuperAdmin = $adminUser ? $adminUser->hasRole('Super Admin', 'admin') : false;
-        $can = fn (string $permission): bool => $adminUser && (
-            $isSuperAdmin || $adminUser->checkPermissionTo($permission, 'admin')
-        );
+
+        $isSuperAdmin = false;
+        if ($adminUser) {
+            $isSuperAdmin =
+                $adminUser->hasRole('Super Admin', 'admin') ||
+                $adminUser->hasRole('Super Admin', 'web');
+        }
+
+        $can = function (string $permission) use ($adminUser, $isSuperAdmin): bool {
+            if (!$adminUser) {
+                return false;
+            }
+
+            if ($isSuperAdmin) {
+                return true;
+            }
+
+            return
+                $adminUser->checkPermissionTo($permission, 'admin') ||
+                $adminUser->checkPermissionTo($permission, 'web');
+        };
+
         $isRequestsActive = request()->routeIs('admin.requests')
             || request()->routeIs('admin.requests.status')
             || request()->routeIs('admin.requests.delete');
+
         $isRequestHistoryActive = request()->routeIs('admin.requests.history');
+
         $adminSidebarVisible = $adminUser
-            ? ($adminUser->usertype === 'admin'
+            ? (
+                $adminUser->usertype === 'admin'
                 || $adminUser->roles()
-                    ->where('guard_name', 'admin')
+                    ->whereIn('guard_name', ['admin', 'web'])
                     ->where('name', '!=', 'user')
-                    ->exists())
+                    ->exists()
+            )
             : false;
     @endphp
 
