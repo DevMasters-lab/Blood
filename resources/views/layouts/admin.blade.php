@@ -24,9 +24,9 @@
 <body class="bg-[#FAFAFA] font-sans text-[#1A1C1E] {{ app()->getLocale() === 'km' ? 'font-km' : '' }}">
     @php
         $adminUser = auth('admin')->user();
-        $isSuperAdmin = $adminUser ? $adminUser->hasRole('Super Admin') : false;
+        $isSuperAdmin = $adminUser ? $adminUser->hasRole('Super Admin', 'admin') : false;
         $can = fn (string $permission): bool => $adminUser && (
-            $isSuperAdmin || $adminUser->hasPermissionTo($permission, 'web')
+            $isSuperAdmin || $adminUser->checkPermissionTo($permission, 'admin')
         );
         $isRequestsActive = request()->routeIs('admin.requests')
             || request()->routeIs('admin.requests.status')
@@ -35,7 +35,7 @@
         $adminSidebarVisible = $adminUser
             ? ($adminUser->usertype === 'admin'
                 || $adminUser->roles()
-                    ->where('guard_name', 'web')
+                    ->where('guard_name', 'admin')
                     ->where('name', '!=', 'user')
                     ->exists())
             : false;
