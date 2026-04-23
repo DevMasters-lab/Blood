@@ -13,6 +13,8 @@
     <style>
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        
+        /* Only apply Kantumruy Pro when the .font-km class is explicitly present */
         .font-km { font-family: 'Kantumruy Pro', sans-serif !important; }
     </style>
 </head>
@@ -155,14 +157,23 @@
                         </div>
                     </div>
 
-                    {{-- LANGUAGE SWITCHER --}}
+                    {{-- 🌟 UPDATED LANGUAGE SWITCHER 🌟 --}}
                     @if(($settings['enable_language_switcher'] ?? '1') === '1')
                         <div class="relative ml-6 pl-6 border-l border-gray-200" x-data="{ langOpen: false }" @click.away="langOpen = false">
                             <button @click="langOpen = !langOpen" class="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white pl-2 pr-3 py-1.5 shadow-sm hover:border-red-200 hover:bg-red-50/40 transition">
                                 <span class="flex h-7 w-7 items-center justify-center rounded-full bg-red-50 text-red-500">
                                     <i class="fa-solid fa-globe text-xs"></i>
                                 </span>
-                                <span class="text-xs font-black text-gray-700 uppercase">{{ app()->getLocale() }}</span>
+                                
+                                {{-- Full Text on Button --}}
+                                <span class="text-xs font-black text-gray-700">
+                                    @if(app()->getLocale() === 'km')
+                                        <span class="font-km tracking-wide">ភាសាខ្មែរ</span>
+                                    @else
+                                        ENGLISH
+                                    @endif
+                                </span>
+                                
                                 <i class="fa-solid fa-chevron-down text-[10px] text-gray-400 transition-transform" :class="langOpen ? 'rotate-180' : ''"></i>
                             </button>
 
@@ -174,13 +185,13 @@
                                  x-transition:leave-start="transform opacity-100 scale-100"
                                  x-transition:leave-end="transform opacity-0 scale-95"
                                  class="absolute right-0 mt-2 w-44 rounded-xl border border-gray-100 bg-white p-2 shadow-xl z-50" style="display: none;">
+                                
                                 <a href="{{ route('language.switch', 'en') }}" class="flex items-center justify-between rounded-lg px-3 py-2 text-sm font-bold transition {{ app()->getLocale() === 'en' ? 'bg-red-50 text-red-600' : 'text-gray-700 hover:bg-gray-50' }}">
-                                    <span class="inline-flex items-center gap-2"><span>{{ __('ui.english') }}</span><span>🇬🇧</span></span>
-                                    <span class="text-[11px] font-black">EN</span>
+                                    <span class="inline-flex items-center gap-2"><span>🇬🇧</span><span>English</span></span>
                                 </a>
+                                
                                 <a href="{{ route('language.switch', 'km') }}" class="mt-1 flex items-center justify-between rounded-lg px-3 py-2 text-sm font-bold transition {{ app()->getLocale() === 'km' ? 'bg-red-50 text-red-600' : 'text-gray-700 hover:bg-gray-50' }}">
-                                    <span class="inline-flex items-center gap-2"><span>{{ __('ui.khmer') }}</span><span>🇰🇭</span></span>
-                                    <span class="text-[11px] font-black">KM</span>
+                                    <span class="inline-flex items-center gap-2"><span>🇰🇭</span><span class="font-km">ភាសាខ្មែរ</span></span>
                                 </a>
                             </div>
                         </div>
@@ -243,47 +254,63 @@
                  x-transition:enter-end="opacity-100 translate-y-0"
                  class="md:hidden mt-4 pb-4 border-t border-gray-100" style="display: none;">
                 
-                <a href="{{ route('home') }}" class="block py-3 text-gray-600 hover:text-red-600 font-medium">{{ __('ui.home') }}</a>
-                <a href="{{ route('home') }}#requests" class="block py-3 text-gray-600 hover:text-red-600 font-medium">{{ __('ui.urgent_requests') }}</a>
+                <a href="{{ route('home') }}" class="block py-3 px-6 text-gray-600 hover:text-red-600 font-medium">{{ __('ui.home') ?? 'Home' }}</a>
+                <a href="{{ route('home') }}#requests" class="block py-3 px-6 text-gray-600 hover:text-red-600 font-medium">{{ __('ui.urgent_requests') ?? 'Urgent Requests' }}</a>
 
                 @if(($settings['enable_language_switcher'] ?? '1') === '1')
-                    <div class="flex items-center gap-2 py-3">
-                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wide">{{ __('ui.language') }}</span>
-                        <a href="{{ route('language.switch', 'en') }}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition {{ app()->getLocale() === 'en' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600' }}"><span>🇬🇧</span><span>EN</span></a>
-                        <a href="{{ route('language.switch', 'km') }}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition {{ app()->getLocale() === 'km' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600' }}"><span>🇰🇭</span><span>KM</span></a>
+                    <div class="flex flex-col gap-2 py-3 px-6 border-b border-gray-100">
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wide">Language</span>
+                        <div class="flex items-center gap-2">
+                            <a href="{{ route('language.switch', 'en') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition {{ app()->getLocale() === 'en' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600' }}"><span>🇬🇧</span><span>English</span></a>
+                            <a href="{{ route('language.switch', 'km') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition {{ app()->getLocale() === 'km' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600' }}"><span>🇰🇭</span><span class="font-km">ភាសាខ្មែរ</span></a>
+                        </div>
                     </div>
                 @endif
                 
-                <a href="{{ route('user.requests.create') }}" class="block py-3 text-red-600 font-bold">{{ __('ui.request_blood') }}</a>
-                
-                {{-- AUTHENTICATED OR GUEST MOBILE MENU --}}
                 @auth
-                    <div class="py-3 border-t border-gray-100 mt-2">
-                        <div class="flex items-center mb-3">
-                            @if(auth()->user()->avatar)
-                                <img src="{{ asset('storage/' . auth()->user()->avatar) }}" class="w-8 h-8 rounded-full object-cover mr-3 border border-red-100">
-                            @else
-                                <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mr-3 text-gray-400">
-                                    <i class="fa-solid fa-user"></i>
-                                </div>
-                            @endif
-                            <div class="flex flex-col">
-                                <span class="font-bold text-gray-800 leading-tight">{{ auth()->user()->name }}</span>
-                                <span class="text-[10px] font-bold text-red-500 uppercase tracking-wider">{{ auth()->user()->blood_type ?? __('ui.not_available') }} {{ __('ui.donor') }}</span>
-                            </div>
+                    {{-- ADMIN VIEW --}}
+                    @if(auth()->user()->usertype === 'admin')
+                        <div class="py-3 mt-2 px-6">
+                            <a href="{{ route('admin.dashboard') }}" class="block py-2 text-slate-900 font-black"><i class="fa-solid fa-shield-halved mr-2"></i> {{ __('ui.admin_portal') ?? 'Admin Portal' }}</a>
+                            <form action="{{ route('logout') }}" method="POST">
+                                @csrf
+                                <button class="text-gray-500 hover:text-red-600 font-medium w-full text-left py-2">{{ __('ui.logout') ?? 'Logout' }}</button>
+                            </form>
                         </div>
-                        
-                        <a href="{{ route('user.dashboard') }}" class="block py-2 text-gray-600 hover:text-red-600 font-medium">{{ __('ui.my_dashboard') }}</a>
-                        <a href="{{ route('user.profile') }}" class="block py-2 text-gray-600 hover:text-red-600 font-medium">{{ __('ui.profile_settings') }}</a>
-                        
-                        <form action="{{ route('logout') }}" method="POST">
-                            @csrf
-                            <button class="text-gray-500 hover:text-red-600 font-medium w-full text-left py-2">{{ __('ui.logout') }}</button>
-                        </form>
-                    </div>
+                    {{-- NORMAL USER VIEW --}}
+                    @else
+                        <a href="{{ route('user.requests.create') }}" class="block py-3 px-6 text-red-600 font-bold">{{ __('ui.request_blood') ?? 'Request Blood' }}</a>
+                        <div class="py-3 mt-2 px-6">
+                            <div class="flex items-center mb-3">
+                                @if(auth()->user()->avatar)
+                                    <img src="{{ asset('storage/' . auth()->user()->avatar) }}" class="w-8 h-8 rounded-full object-cover mr-3 border border-red-100">
+                                @else
+                                    <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mr-3 text-gray-400">
+                                        <i class="fa-solid fa-user"></i>
+                                    </div>
+                                @endif
+                                <div class="flex flex-col">
+                                    <span class="font-bold text-gray-800 leading-tight">{{ auth()->user()->name }}</span>
+                                    <span class="text-[10px] font-bold text-red-500 uppercase tracking-wider">{{ auth()->user()->blood_type ?? __('ui.not_available') }} {{ __('ui.donor') }}</span>
+                                </div>
+                            </div>
+                            
+                            <a href="{{ route('user.dashboard') }}" class="block py-2 text-gray-600 hover:text-red-600 font-medium">{{ __('ui.my_dashboard') ?? 'My Dashboard' }}</a>
+                            <a href="{{ route('user.profile') }}" class="block py-2 text-gray-600 hover:text-red-600 font-medium">{{ __('ui.profile_settings') ?? 'Profile Settings' }}</a>
+                            
+                            <form action="{{ route('logout') }}" method="POST">
+                                @csrf
+                                <button class="text-gray-500 hover:text-red-600 font-medium w-full text-left py-2">{{ __('ui.logout') ?? 'Logout' }}</button>
+                            </form>
+                        </div>
+                    @endif
                 @else
-                    <div class="py-3 border-t border-gray-100 mt-2">
-                        <a href="{{ route('user.login') }}" class="block py-2 text-red-600 font-bold"><i class="fa-solid fa-right-to-bracket mr-2"></i> {{ __('ui.login') }}</a>
+                    <a href="{{ route('user.requests.create') }}" class="block py-3 px-6 text-red-600 font-bold">{{ __('ui.request_blood') ?? 'Request Blood' }}</a>
+                    <div class="flex flex-col gap-3 mt-4 border-t border-gray-100 pt-4 px-6">
+                        <a href="{{ route('user.login') }}" class="flex items-center justify-center gap-2 w-full py-3 border border-gray-200 rounded-xl font-bold text-gray-600">
+                            <i class="fa-solid fa-right-to-bracket"></i> {{ __('ui.login') ?? 'Login' }}
+                        </a>
+                        <a href="{{ route('register') }}" class="text-center w-full py-3 bg-red-600 text-white rounded-xl font-bold shadow-md">{{ __('ui.register') ?? 'Register' }}</a>
                     </div>
                 @endauth
             </div>

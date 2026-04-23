@@ -15,7 +15,10 @@
     <style>
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        
+        /* This ensures Khmer font is ONLY applied where the .font-km class exists */
         .font-km { font-family: 'Kantumruy Pro', sans-serif !important; }
+        
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
@@ -260,23 +263,31 @@
                             </div>
                         </a>
 
+                        {{-- 🌟 FIX: LANGUAGE SWITCHER 🌟 --}}
                         <details class="relative group">
                             <summary class="list-none cursor-pointer inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white pl-2 pr-3 py-1.5 shadow-sm hover:border-red-200 hover:bg-red-50/40 transition">
                                 <span class="flex h-7 w-7 items-center justify-center rounded-full bg-red-50 text-red-500">
                                     <i class="fa-solid fa-globe text-xs"></i>
                                 </span>
-                                <span class="text-xs font-black text-gray-700 uppercase">{{ app()->getLocale() }}</span>
+                                
+                                {{-- Display Text on Button --}}
+                                <span class="text-xs font-black text-gray-700">
+                                    @if(app()->getLocale() === 'km')
+                                        <span class="font-km tracking-wide">ភាសាខ្មែរ</span>
+                                    @else
+                                        ENGLISH
+                                    @endif
+                                </span>
+
                                 <i class="fa-solid fa-chevron-down text-[10px] text-gray-400 transition-transform group-open:rotate-180"></i>
                             </summary>
 
                             <div class="absolute right-0 mt-2 w-44 rounded-xl border border-gray-100 bg-white p-2 shadow-xl z-50">
                                 <a href="{{ route('admin.language.switch', 'en') }}" class="flex items-center justify-between rounded-lg px-3 py-2 text-sm font-bold transition {{ app()->getLocale() === 'en' ? 'bg-red-50 text-red-600' : 'text-gray-700 hover:bg-gray-50' }}">
-                                    <span class="inline-flex items-center gap-2"><span>{{ __('ui.english') }}</span><span>🇬🇧</span></span>
-                                    <span class="text-[11px] font-black">EN</span>
+                                    <span class="inline-flex items-center gap-2"><span>🇬🇧</span><span>English</span></span>
                                 </a>
                                 <a href="{{ route('admin.language.switch', 'km') }}" class="mt-1 flex items-center justify-between rounded-lg px-3 py-2 text-sm font-bold transition {{ app()->getLocale() === 'km' ? 'bg-red-50 text-red-600' : 'text-gray-700 hover:bg-gray-50' }}">
-                                    <span class="inline-flex items-center gap-2"><span>{{ __('ui.khmer') }}</span><span>🇰🇭</span></span>
-                                    <span class="text-[11px] font-black">KM</span>
+                                    <span class="inline-flex items-center gap-2"><span>🇰🇭</span><span class="font-km">ភាសាខ្មែរ</span></span>
                                 </a>
                             </div>
                         </details>
