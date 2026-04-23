@@ -3,8 +3,14 @@
 @section('content')
 @php
     $adminUser = auth('admin')->user();
-    $isSuperAdmin = $adminUser?->hasRole('Super Admin');
-    $can = fn (string $permission): bool => $adminUser && ($isSuperAdmin || $adminUser->hasPermissionTo($permission, 'web'));
+
+    $isSuperAdmin = $adminUser
+        ? $adminUser->hasRole('Super Admin', 'web')
+        : false;
+
+    $can = fn (string $permission): bool => $adminUser && (
+        $isSuperAdmin || $adminUser->checkPermissionTo($permission, 'web')
+    );
 @endphp
 <div class="space-y-6 animate-fade-in px-8 py-8"">
 
