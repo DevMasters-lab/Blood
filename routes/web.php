@@ -5,7 +5,7 @@ use App\Http\Controllers\Web\AdminController;
 use App\Http\Controllers\Web\RoleController;
 use App\Http\Controllers\Web\WebAuthController;
 use App\Http\Controllers\Web\UserWebController;
-use App\Http\Controllers\Web\NotificationController; // 🌟 NEW: Added Notification Controller
+use App\Http\Controllers\Web\NotificationController;
 use App\Models\BloodRequest;
 use Illuminate\Http\Request;
 
@@ -81,13 +81,23 @@ Route::post('/admin/logout', [WebAuthController::class, 'logout'])->name('admin.
 
 /*
 |--------------------------------------------------------------------------
-| 3. SHARED AUTH ROUTES (Notifications)
+| 3. DEVICE & NOTIFICATION ROUTES (Guests & Users)
 |--------------------------------------------------------------------------
-| Accessible by both standard users (web) AND admins (admin)
 */
+
+// 🌟 NEW: Device Registration API (Triggered by Alpine.js in the background)
+Route::post('/api/register-device', [UserWebController::class, 'registerDevice']);
+
+// 🌟 NEW: Fetch dynamic notifications for the Alpine.js dropdown
+Route::get('/api/notifications', [NotificationController::class, 'fetchDynamic']);
+Route::post('/api/notifications/read-all', [NotificationController::class, 'markAllDynamic']);
+
+// Click to read a specific notification (Moved OUT of auth so guests can click it!)
+Route::get('/notifications/{id}/read', [NotificationController::class, 'readAndRedirect'])->name('notifications.read');
+
+// Standard Blade Form "Mark All Read" (Still used by the Admin Panel)
 Route::middleware(['auth:web,admin'])->group(function () {
-    Route::get('/notifications/{id}/read', [NotificationController::class, 'readAndRedirect'])->name('notifications.read');
-    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read_all');
+    Route::post('/notifications/read-all-admin', [NotificationController::class, 'markAllAsRead'])->name('notifications.read_all');
 });
 
 

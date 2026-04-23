@@ -33,6 +33,9 @@
         <form action="{{ route('user.requests.store') }}" method="POST" class="p-8 md:p-10">
             @csrf
             
+            {{-- 🌟 NEW: Hidden input to send the device UUID to the controller 🌟 --}}
+            <input type="hidden" name="device_uuid" id="device_uuid_input">
+            
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 
                 {{-- Blood Type --}}
@@ -84,4 +87,14 @@
         </form>
     </div>
 </div>
+
+{{-- 🌟 NEW: Script to grab the UUID from memory and put it in the hidden input 🌟 --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        let uuid = localStorage.getItem('device_uuid');
+        if (uuid) {
+            document.getElementById('device_uuid_input').value = uuid;
+        }
+    });
+</script>
 @endsection

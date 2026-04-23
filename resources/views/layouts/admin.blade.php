@@ -143,7 +143,8 @@
 
         <div class="flex-1 flex flex-col overflow-hidden relative">
             @auth('admin')
-                <header class="flex items-center justify-between px-10 py-6 bg-white/70 backdrop-blur-xl border-b border-gray-100 z-10">
+                {{-- 🌟 ALPINE NOTIFICATION SYSTEM IN HEADER 🌟 --}}
+                <header class="flex items-center justify-between px-10 py-6 bg-transparent backdrop-blur-xl border-b border-transparent z-10" x-data="notificationSystem()" x-init="initNotifications()">
                     <div class="flex-1 flex flex-col justify-center">
                         <h2 class="text-2xl font-black text-gray-800 tracking-tight leading-none">
                             {{ __('ui.welcome_back', ['name' => explode(' ', auth('admin')->user()->name)[0]]) }}
@@ -171,8 +172,8 @@
                             </div>
                         </div>
 
-                        {{-- 🌟 NOTIFICATION BELL DROPDOWN 🌟 --}}
-                        <div x-data="{ open: false }" class="relative inline-block text-left" @click.away="open = false">
+                        {{-- DYNAMIC NOTIFICATION BELL DROPDOWN --}}
+                        <div class="relative inline-block text-left" @click.away="open = false">
                             
                             {{-- Bell Button --}}
                             <div class="relative group cursor-pointer block">
@@ -180,12 +181,8 @@
                                 <button @click="open = !open" type="button" class="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-white border border-gray-100 text-[#D32F2F] shadow-sm active:scale-95 transition-transform hover:border-red-200 focus:outline-none">
                                     <i class="fa-solid fa-bell text-xl group-hover:scale-110 transition-transform"></i>
                                     
-                                    {{-- Unread Badge Counter --}}
-                                    @if(auth('admin')->user()->unreadNotifications->count() > 0)
-                                        <span class="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full border-[3px] border-white bg-[#D32F2F] text-[10px] font-black text-white shadow-sm z-10">
-                                            {{ auth('admin')->user()->unreadNotifications->count() }}
-                                        </span>
-                                    @endif
+                                    {{-- Unread Badge Counter (Dynamic) --}}
+                                    <span x-show="unreadCount > 0" class="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full border-[3px] border-white bg-[#D32F2F] text-[10px] font-black text-white shadow-sm z-10" x-text="unreadCount" style="display: none;"></span>
                                 </button>
                             </div>
 
@@ -203,37 +200,42 @@
                                 {{-- Dropdown Header --}}
                                 <div class="flex items-center justify-between border-b border-gray-100 bg-gray-50/80 px-5 py-4">
                                     <h3 class="text-sm font-black text-gray-900">Notifications</h3>
-                                    @if(auth('admin')->user()->unreadNotifications->count() > 0)
-                                        <form action="{{ route('notifications.read_all') }}" method="POST" class="m-0">
-                                            @csrf
-                                            <button type="submit" class="text-[10px] font-bold text-[#D32F2F] hover:text-[#B71C1C] uppercase tracking-wider transition-colors">Mark all read</button>
-                                        </form>
-                                    @endif
+                                    <button x-show="unreadCount > 0" @click="markAllAsRead()" class="text-[10px] font-bold text-[#D32F2F] hover:text-[#B71C1C] uppercase tracking-wider transition-colors">Mark all read</button>
                                 </div>
 
-                                {{-- Notifications List --}}
+                                {{-- Notifications List (Dynamic Alpine Loop) --}}
                                 <div class="max-h-96 overflow-y-auto divide-y divide-gray-50">
-                                    @forelse(auth('admin')->user()->unreadNotifications as $notification)
-                                        <a href="{{ route('notifications.read', $notification->id) }}" class="flex items-start gap-4 px-5 py-4 transition-colors hover:bg-gray-50/80 group">
-                                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50 text-[#D32F2F] group-hover:bg-[#D32F2F] group-hover:text-white transition-colors">
-                                                <i class="fa-solid {{ $notification->data['icon'] ?? 'fa-bell' }}"></i>
+                                    <template x-for="notif in notifications" :key="notif.id">
+                                        <a :href="'/notifications/' + notif.id + '/read'" class="flex items-start gap-4 px-5 py-4 transition-colors hover:bg-gray-50/80 group">
+                                            
+                                            {{-- Icon Styling: Gray if read, Red if unread --}}
+                                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors" 
+                                                 :class="notif.is_read ? 'bg-gray-100 text-gray-400 group-hover:bg-gray-200' : 'bg-red-50 text-[#D32F2F] group-hover:bg-[#D32F2F] group-hover:text-white'">
+                                                <i class="fa-solid" :class="notif.icon"></i>
                                             </div>
+                                            
                                             <div class="flex-1 space-y-1">
-                                                <p class="text-sm font-bold text-gray-900">{{ $notification->data['title'] }}</p>
-                                                <p class="text-xs font-medium text-gray-500 line-clamp-2">{{ $notification->data['message'] }}</p>
-                                                <p class="text-[10px] font-bold text-gray-400 mt-2"><i class="fa-regular fa-clock mr-1"></i> {{ $notification->created_at->diffForHumans() }}</p>
+                                                {{-- Text Styling: Gray if read --}}
+                                                <p class="text-sm font-bold" :class="notif.is_read ? 'text-gray-500' : 'text-gray-900'" x-text="notif.title"></p>
+                                                <p class="text-xs font-medium text-gray-500 line-clamp-2" x-text="notif.message"></p>
+                                                <p class="text-[10px] font-bold mt-2" :class="notif.is_read ? 'text-gray-300' : 'text-gray-400'">
+                                                    <i class="fa-regular fa-clock mr-1"></i> <span x-text="notif.time"></span>
+                                                </p>
                                             </div>
-                                            <div class="w-2 h-2 rounded-full bg-[#D32F2F] mt-1.5 shrink-0"></div>
+
+                                            {{-- Unread Red Dot --}}
+                                            <div x-show="!notif.is_read" class="w-2.5 h-2.5 rounded-full bg-[#D32F2F] mt-1.5 shrink-0 border-2 border-white shadow-sm"></div>
                                         </a>
-                                    @empty
-                                        <div class="px-5 py-10 text-center flex flex-col items-center">
-                                            <div class="w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center mb-3">
-                                                <i class="fa-regular fa-bell-slash text-gray-400 text-xl"></i>
-                                            </div>
-                                            <p class="text-sm font-bold text-gray-900">All caught up!</p>
-                                            <p class="text-xs text-gray-500 font-medium mt-1">You have no new notifications.</p>
+                                    </template>
+                                    
+                                    {{-- Empty State --}}
+                                    <div x-show="notifications.length === 0" class="px-5 py-10 text-center flex flex-col items-center" style="display: none;">
+                                        <div class="w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center mb-3">
+                                        <i class="fa-regular fa-bell-slash text-gray-400 text-xl"></i>
                                         </div>
-                                    @endforelse
+                                        <p class="text-sm font-bold text-gray-900">All caught up!</p>
+                                        <p class="text-xs text-gray-500 font-medium mt-1">You have no new notifications.</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -273,12 +275,54 @@
                 </header>
             @endauth
 
-            <main class="flex-1 overflow-x-hidden overflow-y-auto p-10 {{ !auth('admin')->check() ? 'flex items-center justify-center' : '' }}">
+            <main class="flex-1 overflow-x-hidden overflow-y-auto p-10 bg-[#FAFAFA] {{ !auth('admin')->check() ? 'flex items-center justify-center' : '' }}">
                 <div class="{{ !auth('admin')->check() ? 'w-full max-w-md' : 'max-w-[1400px] mx-auto' }} animate-fade-in">
                     @yield('content')
                 </div>
             </main>
         </div>
     </div>
+
+    {{-- 🌟 ALPINE DYNAMIC NOTIFICATIONS ENGINE (Admin) 🌟 --}}
+    <script>
+        function notificationSystem() {
+            return {
+                open: false,
+                notifications: [],
+                unreadCount: 0,
+
+                initNotifications() {
+                    let deviceUuid = localStorage.getItem('device_uuid');
+                    if (!deviceUuid) {
+                        deviceUuid = crypto.randomUUID();
+                        localStorage.setItem('device_uuid', deviceUuid);
+                    }
+
+                    fetch(`/api/notifications?device_uuid=${deviceUuid}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            this.notifications = data.notifications || [];
+                            this.unreadCount = data.count || 0;
+                        })
+                        .catch(err => console.error('Error fetching notifications:', err));
+                },
+
+                markAllAsRead() {
+                    let deviceUuid = localStorage.getItem('device_uuid');
+                    fetch(`/api/notifications/read-all`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json', 
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}' 
+                        },
+                        body: JSON.stringify({ device_uuid: deviceUuid })
+                    }).then(() => {
+                        this.notifications.forEach(notif => notif.is_read = true);
+                        this.unreadCount = 0;
+                    });
+                }
+            }
+        }
+    </script>
 </body>
 </html>

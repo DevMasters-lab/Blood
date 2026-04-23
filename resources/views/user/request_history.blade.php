@@ -43,7 +43,7 @@
                     <div class="relative flex-1 min-w-0 border-b lg:border-b-0 lg:border-r border-gray-200">
                         <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
                         <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by hospital, patient, blood type, or status..."
-                               class="w-full bg-transparent pl-9 pr-4 py-3 text-sm font-semibold text-gray-800 outline-none placeholder:text-gray-400">
+                            class="w-full bg-transparent pl-9 pr-4 py-3 text-sm font-semibold text-gray-800 outline-none placeholder:text-gray-400">
                     </div>
 
                     <div class="flex-1 min-w-[200px] border-b lg:border-b-0 lg:border-r border-gray-200">
@@ -152,7 +152,7 @@
                         <td class="px-6 py-5 text-center">
                             @if($req->status === 'open')
                                 <form action="{{ route('user.requests.complete', $req->id) }}" method="POST"
-                                      onsubmit="return confirm('Mark this request as completed?')">
+                                    onsubmit="return confirm('Mark this request as completed?')">
                                     @csrf @method('PUT')
                                     <button type="submit"
                                             class="px-4 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm"

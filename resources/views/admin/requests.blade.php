@@ -112,11 +112,24 @@
                                 </form>
                             @endif
 
-                            {{-- Delete Button --}}
+                            {{-- Reject/Cancel Button with Custom Message --}}
+                            @if($req->status == 'open' && $can('reject_requests'))
+                                <form action="{{ route('admin.requests.status', $req->id) }}" method="POST" onsubmit="return askForReason(event, this, 'Why are you rejecting this request? (Optional message for the user):');">
+                                    @csrf
+                                    <input type="hidden" name="status" value="cancelled">
+                                    <input type="hidden" name="rejection_reason" class="reason-input">
+                                    <button type="submit" class="w-10 h-10 rounded-xl bg-yellow-50 text-yellow-600 hover:bg-yellow-500 hover:text-white flex items-center justify-center transition-all shadow-sm" title="Reject Request">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </form>
+                            @endif
+
+                            {{-- 🌟 UPDATED: Delete Button with Custom Message 🌟 --}}
                             @if($can('reject_requests'))
-                                <form action="{{ route('admin.requests.delete', $req->id) }}" method="POST" data-confirm="{{ __('ui.confirm_delete_request') }}" onsubmit="return confirm(this.dataset.confirm)">
+                                <form action="{{ route('admin.requests.delete', $req->id) }}" method="POST" onsubmit="return askForReason(event, this, 'Why are you completely deleting this request? (Optional message for the user):');">
                                     @csrf
                                     @method('DELETE')
+                                    <input type="hidden" name="delete_reason" class="reason-input">
                                     <button type="submit" class="w-10 h-10 rounded-xl bg-red-50 text-red-600 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all shadow-sm" title="{{ __('ui.delete_request') }}">
                                         <i class="fa-solid fa-trash-can"></i>
                                     </button>
@@ -157,4 +170,28 @@
         </div>
     </div>
 </div>
+
+{{-- 🌟 SCRIPT FOR DYNAMIC MESSAGE POPUPS 🌟 --}}
+<script>
+    function askForReason(event, form, promptMessage) {
+        event.preventDefault(); 
+        
+        // Show the custom question based on which button was clicked
+        let reason = prompt(promptMessage);
+        
+        // If they hit cancel on the prompt, stop the submission
+        if (reason === null) {
+            return false; 
+        }
+        
+        // Find the hidden input inside the specific form they clicked and add the reason
+        let input = form.querySelector('.reason-input');
+        if(input) {
+            input.value = reason;
+        }
+        
+        // Send it to the controller!
+        form.submit();
+    }
+</script>
 @endsection

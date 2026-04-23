@@ -17,9 +17,12 @@ use Laravel\Socialite\Two\GoogleProvider;
 use Spatie\Permission\Models\Role;
 use Throwable;
 
-// 🌟 NEW: Imports for the Notification System 🌟
+// Notifications
 use App\Notifications\SystemAlert;
 use Illuminate\Support\Facades\Notification;
+
+// Device Tracking
+use App\Models\Device;
 
 class UserWebController extends Controller
 {
@@ -246,8 +249,9 @@ class UserWebController extends Controller
             'needed_date' => 'required|date|after:today',
         ]);
 
-        BloodRequest::create([
-            'requester_id' => Auth::id(),
+        // Save the request and assign it to a variable so we can use its data
+        $bloodRequest = BloodRequest::create([
+            'requester_id' => Auth::id(), // Will be null if it's a guest
             'blood_type' => $request->blood_type,
             'quantity' => $request->quantity,
             'hospital_name' => $request->hospital_name,
@@ -255,14 +259,26 @@ class UserWebController extends Controller
             'status' => 'open',
         ]);
 
-        // 🌟 NOTIFY ADMINS: New Blood Request
+        // 🌟 1. NOTIFY ADMINS
         $admins = User::whereIn('usertype', ['admin'])->get();
+        $userName = auth()->check() ? auth()->user()->name : 'A Guest';
+        
         Notification::send($admins, new SystemAlert(
             'New Blood Request!', 
-            auth()->user()->name . ' just requested ' . $request->blood_type . ' blood at ' . $request->hospital_name . '.', 
+            $userName . ' just requested ' . $request->blood_type . ' blood at ' . $request->hospital_name . '.', 
             'fa-droplet', 
             route('admin.requests') 
         ));
+
+        // 🌟 2. NOTIFY THE LOGGED-IN USER (Pending Approval) 🌟
+        if (auth()->check()) {
+            auth()->user()->notify(new SystemAlert(
+                'Request Submitted ⏳', 
+                "Your blood request for {$bloodRequest->blood_type} at {$bloodRequest->hospital_name} has been received. Please wait for admin approval.", 
+                'fa-hourglass-half', // A nice hourglass loading icon
+                route('user.requests.history') // Send them to their history tab
+            ));
+        }
 
         return redirect()->route('user.dashboard')->with('success', 'Request Created Successfully!');
     }
@@ -318,13 +334,10 @@ class UserWebController extends Controller
         return redirect()->route('user.wallet')->with('success', 'Donation invoice submitted! Waiting for Admin verification.');
     }
 
-    // THE MISSING WALLET METHOD
     public function wallet() {
         $invoices = DonationInvoice::where('user_id', Auth::id())->latest()->get();
         return view('user.wallet', compact('invoices'));
     }
-    
-    // -------------------------------
     
     public function markRequestAsComplete($id) {
         $request = BloodRequest::findOrFail($id);
@@ -353,17 +366,14 @@ class UserWebController extends Controller
             });
         }
 
-        // Filter by status
         if ($request->filled('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
         }
 
-        // Filter by blood type
         if ($request->filled('blood_type')) {
             $query->where('blood_type', $request->blood_type);
         }
 
-        // Filter by date range
         if ($request->filled('from_date')) {
             $query->whereDate('needed_date', '>=', $request->from_date);
         }
@@ -373,7 +383,6 @@ class UserWebController extends Controller
 
         $requests = $query->paginate(10)->withQueryString();
 
-        // Stats for summary cards
         $stats = [
             'total'     => BloodRequest::where('requester_id', Auth::id())->count(),
             'open'      => BloodRequest::where('requester_id', Auth::id())->where('status', 'open')->count(),
@@ -434,6 +443,32 @@ class UserWebController extends Controller
 
         return view('user.certificate', compact('donation'));
     }
+
+    public function registerDevice(Request $request)
+    {
+        $request->validate([
+            'device_uuid' => 'required|string|max:255'
+        ]);
+
+        $userId = Auth::check() ? Auth::id() : null;
+
+        // Find this device in the database, or create it if it's brand new
+        $device = Device::firstOrCreate(
+            ['device_uuid' => $request->device_uuid]
+        );
+
+        // If they logged in, link the device to their user account!
+        if ($userId && $device->user_id !== $userId) {
+            $device->update(['user_id' => $userId]);
+        }
+
+        return response()->json([
+            'status' => 'success', 
+            'device_uuid' => $device->device_uuid
+        ]);
+    }
+
+    // --- Private Helper Methods ---
 
     private function completeLogin(Request $request, User $user)
     {

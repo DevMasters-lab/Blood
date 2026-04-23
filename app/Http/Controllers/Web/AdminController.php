@@ -160,15 +160,76 @@ class AdminController extends Controller
     public function updateRequestStatus(Request $request, $id)
     {
         $bloodRequest = BloodRequest::findOrFail($id);
+        $oldStatus = $bloodRequest->status;
+        
         $bloodRequest->update(['status' => $request->status]);
+
+        // 🌟 1. NOTIFY IF COMPLETED 🌟
+        if ($request->status === 'completed' && $oldStatus !== 'completed') {
+            if ($bloodRequest->requester_id) {
+                $user = User::find($bloodRequest->requester_id);
+                if ($user) {
+                    $user->notify(new SystemAlert(
+                        'Request Completed! 🎉', 
+                        "Good news! Your urgent request for {$bloodRequest->blood_type} blood at {$bloodRequest->hospital_name} has been marked as completed.", 
+                        'fa-circle-check', 
+                        route('user.requests.history')
+                    ));
+                }
+            }
+        }
+
+        // 🌟 2. NOTIFY IF CANCELLED/REJECTED WITH CUSTOM MESSAGE 🌟
+        if (in_array($request->status, ['cancelled', 'rejected']) && !in_array($oldStatus, ['cancelled', 'rejected'])) {
+            if ($bloodRequest->requester_id) {
+                $user = User::find($bloodRequest->requester_id);
+                if ($user) {
+                    $message = "Your request for {$bloodRequest->blood_type} blood at {$bloodRequest->hospital_name} was cancelled.";
+                    
+                    // If the admin typed a custom reason, add it to the notification!
+                    if ($request->filled('rejection_reason')) {
+                        $message .= " Admin Note: \"" . $request->rejection_reason . "\"";
+                    }
+
+                    $user->notify(new SystemAlert(
+                        'Request Cancelled ❌', 
+                        $message, 
+                        'fa-circle-xmark', 
+                        route('user.requests.history')
+                    ));
+                }
+            }
+        }
+
         return back()->with('success', 'Request status updated!');
     }
 
-    public function deleteRequest($id)
+    public function deleteRequest(Request $request, $id)
     {
-        $request = BloodRequest::findOrFail($id);
-        $request->delete();
-        return back()->with('success', 'Request deleted successfully.');
+        $bloodRequest = BloodRequest::findOrFail($id);
+        
+        if ($bloodRequest->requester_id) {
+            $user = User::find($bloodRequest->requester_id);
+            
+            if ($user) {
+                $message = "Your request for {$bloodRequest->blood_type} blood at {$bloodRequest->hospital_name} was removed by the administrator.";
+                
+                if ($request->filled('delete_reason')) {
+                    $message .= " Admin Note: \"" . $request->delete_reason . "\"";
+                }
+
+                $user->notify(new SystemAlert(
+                    'Request Deleted 🗑️', 
+                    $message, 
+                    'fa-trash-can', 
+                    route('user.dashboard') 
+                ));
+            }
+        }
+
+        $bloodRequest->delete();
+        
+        return back()->with('success', 'Request deleted successfully and user notified.');
     }
 
     public function requestHistory(Request $request)
