@@ -1,4 +1,4 @@
-name: CI/CD Integration .
+name: CI/CD Integration
 
 on:
   push:
@@ -10,17 +10,23 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-
       - name: Pull latest code into Blood_Production directory
         run: |
-          cd /var/www/Blood_Production  
-          git fetch origin master    
-          git reset --hard origin/master 
-          
-      - name: Fix Storage Permissions
+          cd /var/www/Blood_Production
+          git config --global --add safe.directory /var/www/Blood_Production
+          git fetch origin master
+          git reset --hard origin/master
+
+      - name: Install Composer dependencies
         run: |
-          sudo chmod -R 775 /var/www/Blood_Production/storage
-          sudo chmod -R 775 /var/www/Blood_Production/bootstrap/cache
+          cd /var/www/Blood_Production
+          composer install --no-dev --optimize-autoloader
+
+      - name: Laravel optimize and migrate
+        run: |
+          cd /var/www/Blood_Production
+          php artisan migrate --force
+          php artisan optimize:clear
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
