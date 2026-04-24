@@ -4,6 +4,9 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -41,10 +44,11 @@ class User extends Authenticatable
         'kyc_verified_by_admin_id',
         'status',
         'last_login_at',
+        'email_verified_at',
         'google_id',
         'telegram_id',
         'telegram_username',
-        'auth_provider'
+        'auth_provider',
     ];
 
     /**
@@ -56,9 +60,7 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
+     * The attributes that should be cast.
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
@@ -69,31 +71,43 @@ class User extends Authenticatable
 
     // --- Relationships ---
 
-    // A user can make many blood requests
-    public function bloodRequests()
+    /**
+     * A user can make many blood requests.
+     */
+    public function bloodRequests(): HasMany
     {
         return $this->hasMany(BloodRequest::class, 'requester_id');
     }
 
-    // A user can submit many donation invoices
-    public function donationInvoices()
+    /**
+     * A user can submit many donation invoices.
+     */
+    public function donationInvoices(): HasMany
     {
         return $this->hasMany(DonationInvoice::class);
     }
 
-    // A user can respond to many requests (donate to specific people)
-    public function requestResponses()
+    /**
+     * A user can respond to many requests.
+     */
+    public function requestResponses(): HasMany
     {
         return $this->hasMany(RequestResponse::class, 'responder_id');
     }
 
-    // Polymorphic: The user's ID Card photo
-    public function idPhoto()
+    /**
+     * The user's ID card photo.
+     */
+    public function idPhoto(): MorphOne
     {
-        return $this->morphOne(ProofFile::class, 'owner')->where('file_type', 'id_photo');
+        return $this->morphOne(ProofFile::class, 'owner')
+            ->where('file_type', 'id_photo');
     }
 
-    public function proofFiles()
+    /**
+     * All proof files that belong to the user.
+     */
+    public function proofFiles(): MorphMany
     {
         return $this->morphMany(ProofFile::class, 'fileable');
     }

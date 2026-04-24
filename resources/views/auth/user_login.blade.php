@@ -334,7 +334,7 @@
             {{-- Social Sign In --}}
             <div class="mt-5 space-y-3 anim-slide-up delay-5">
                 <a href="{{ route('auth.google.redirect') }}"
-                   class="w-full flex items-center justify-center gap-3 border border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-bold py-3.5 rounded-2xl transition-all text-sm shadow-sm">
+                class="w-full flex items-center justify-center gap-3 border border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-bold py-3.5 rounded-2xl transition-all text-sm shadow-sm">
                     <i class="fa-brands fa-google text-[#DB4437]"></i>
                     <span>Continue with Google</span>
                 </a>
