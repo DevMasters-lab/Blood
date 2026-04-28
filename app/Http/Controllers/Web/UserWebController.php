@@ -16,8 +16,6 @@ use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\GoogleProvider;
 use Spatie\Permission\Models\Role;
 use Throwable;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 // Notifications
 use App\Notifications\SystemAlert;
@@ -95,171 +93,61 @@ class UserWebController extends Controller
         return $this->completeLogin($request, $user);
     }
 
-   public function handleTelegramCallback(Request $request)
-{
-    if (! config('services.telegram.bot_name') || ! config('services.telegram.bot_token')) {
-        return redirect()->route('user.login')->withErrors([
-            'identifier' => 'Telegram sign-in is not configured yet. Add your Telegram bot settings first.',
-        ]);
-    }
+    public function handleTelegramCallback(Request $request)
+    {
+        if (! config('services.telegram.bot_name') || ! config('services.telegram.bot_token')) {
+            return redirect()->route('user.login')->withErrors([
+                'identifier' => 'Telegram sign-in is not configured yet. Add your Telegram bot settings first.',
+            ]);
+        }
 
-    $payload = $request->validate([
-        'id' => 'required|string|max:255',
-        'first_name' => 'required|string|max:255',
-        'last_name' => 'nullable|string|max:255',
-        'username' => 'nullable|string|max:255',
-        'photo_url' => 'nullable|url|max:2048',
-        'auth_date' => 'required|integer',
-        'hash' => 'required|string',
-    ]);
-
-    if (! $this->isValidTelegramLogin($payload)) {
-        return redirect()->route('user.login')->withErrors([
-            'identifier' => 'Telegram sign-in could not be verified. Please try again.',
-        ]);
-    }
-
-    $name = trim(implode(' ', array_filter([
-        $payload['first_name'] ?? null,
-        $payload['last_name'] ?? null,
-    ]))) ?: ($payload['username'] ?? 'Telegram User');
-
-    $user = User::where('telegram_id', (string) $payload['id'])->first();
-
-    if (! $user) {
-        $user = User::create([
-            'name' => $name,
-            'password' => Hash::make(Str::random(32)),
-            'usertype' => 'user',
-            'kyc_status' => 'verified',
-            'kyc_verified_at' => now(),
-            'status' => 'active',
-            'telegram_id' => (string) $payload['id'],
-            'telegram_username' => $payload['username'] ?? null,
-            'telegram_photo_url' => $payload['photo_url'] ?? null,
-            'auth_provider' => 'telegram',
-            'last_login_at' => now(),
+        $payload = $request->validate([
+            'id' => 'required|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'nullable|string|max:255',
+            'username' => 'nullable|string|max:255',
+            'photo_url' => 'nullable|url|max:2048',
+            'auth_date' => 'required|integer',
+            'hash' => 'required|string',
         ]);
 
-        $this->assignDefaultUserRole($user);
-    } else {
-        $user->forceFill([
-            'name' => $user->name ?: $name,
-            'telegram_username' => $payload['username'] ?? $user->telegram_username,
-            'telegram_photo_url' => $payload['photo_url'] ?? $user->telegram_photo_url,
-            'auth_provider' => $user->auth_provider ?: 'telegram',
-            'kyc_status' => $user->kyc_status ?: 'verified',
-            'kyc_verified_at' => $user->kyc_verified_at ?: now(),
-            'status' => $user->status ?: 'active',
-            'last_login_at' => now(),
-        ])->save();
+        if (! $this->isValidTelegramLogin($payload)) {
+            return redirect()->route('user.login')->withErrors([
+                'identifier' => 'Telegram sign-in could not be verified. Please try again.',
+            ]);
+        }
+
+        $name = trim(implode(' ', array_filter([
+            $payload['first_name'] ?? null,
+            $payload['last_name'] ?? null,
+        ]))) ?: ($payload['username'] ?? 'Telegram User');
+
+        $user = User::where('telegram_id', $payload['id'])->first();
+
+        if (! $user) {
+            $user = User::create([
+                'name' => $name,
+                'password' => Str::password(32),
+                'usertype' => 'user',
+                'kyc_status' => 'verified',
+                'status' => 'active',
+                'telegram_id' => $payload['id'],
+                'telegram_username' => $payload['username'] ?? null,
+                'auth_provider' => 'telegram',
+            ]);
+
+            $this->assignDefaultUserRole($user);
+        } else {
+            $user->forceFill([
+                'name' => $user->name ?: $name,
+                'telegram_username' => $payload['username'] ?? $user->telegram_username,
+                'auth_provider' => $user->auth_provider ?: 'telegram',
+            ])->save();
+        }
+
+        return $this->completeLogin($request, $user);
     }
 
-    /*
-     * Telegram login widget does not send phone number directly.
-     * This sends a Telegram bot message with "Share phone number".
-     * After user clicks it, telegramWebhook() will save users.phone automatically.
-     */
-    if (empty($user->phone)) {
-        $this->sendTelegramPhoneRequest($user);
-    }
-
-    return $this->completeLogin($request, $user);
-}
-
-private function sendTelegramPhoneRequest(User $user): void
-{
-    if (! $user->telegram_id || ! config('services.telegram.bot_token')) {
-        return;
-    }
-
-    $response = Http::post('https://api.telegram.org/bot' . config('services.telegram.bot_token') . '/sendMessage', [
-        'chat_id' => $user->telegram_id,
-        'text' => 'Please share your phone number to complete your BloodShare KH account.',
-        'reply_markup' => [
-            'keyboard' => [
-                [
-                    [
-                        'text' => 'Share phone number',
-                        'request_contact' => true,
-                    ],
-                ],
-            ],
-            'resize_keyboard' => true,
-            'one_time_keyboard' => true,
-        ],
-    ]);
-
-    if (! $response->successful()) {
-        Log::error('Telegram phone request failed', [
-            'telegram_id' => $user->telegram_id,
-            'response' => $response->json(),
-        ]);
-    }
-}
-
-public function telegramWebhook(Request $request)
-{
-    Log::info('Telegram webhook received', $request->all());
-
-    $message = $request->input('message');
-
-    if (! $message) {
-        return response()->json(['ok' => true]);
-    }
-
-    $contact = $message['contact'] ?? null;
-
-    if (! $contact) {
-        return response()->json(['ok' => true]);
-    }
-
-    $fromTelegramId = $message['from']['id'] ?? null;
-    $contactTelegramId = $contact['user_id'] ?? $fromTelegramId;
-    $phoneNumber = $contact['phone_number'] ?? null;
-
-    if (! $contactTelegramId || ! $phoneNumber) {
-        return response()->json(['ok' => true]);
-    }
-
-    $phoneNumber = preg_replace('/\s+/', '', $phoneNumber);
-
-    if (! str_starts_with($phoneNumber, '+')) {
-        $phoneNumber = '+' . $phoneNumber;
-    }
-
-    $user = User::where('telegram_id', (string) $contactTelegramId)
-        ->orWhere('telegram_id', (string) $fromTelegramId)
-        ->first();
-
-    if ($user) {
-        $user->forceFill([
-            'phone' => $phoneNumber,
-        ])->save();
-
-        Http::post('https://api.telegram.org/bot' . config('services.telegram.bot_token') . '/sendMessage', [
-            'chat_id' => $fromTelegramId ?: $contactTelegramId,
-            'text' => 'Thank you. Your phone number has been saved successfully.',
-            'reply_markup' => [
-                'remove_keyboard' => true,
-            ],
-        ]);
-
-        Log::info('Telegram phone saved successfully', [
-            'user_id' => $user->id,
-            'telegram_id' => $user->telegram_id,
-            'phone' => $phoneNumber,
-        ]);
-    } else {
-        Log::warning('Telegram phone received but user not found', [
-            'from_telegram_id' => $fromTelegramId,
-            'contact_telegram_id' => $contactTelegramId,
-            'phone' => $phoneNumber,
-        ]);
-    }
-
-    return response()->json(['ok' => true]);
-}
     // --- Auth Logic ---
     public function login(Request $request) {
         $request->validate([
