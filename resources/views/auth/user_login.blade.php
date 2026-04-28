@@ -340,37 +340,34 @@
                 </a>
 
                 @if (config('services.telegram.bot_name'))
-                    <div class="rounded-2xl border border-[#229ED9]/15 bg-[#229ED9]/[0.04] px-4 py-4">
-                        <div class="flex items-center gap-3 mb-3">
-                            <div class="h-10 w-10 rounded-2xl bg-[#229ED9] text-white flex items-center justify-center shadow-sm">
-                                <i class="fa-brands fa-telegram text-base"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm font-black text-gray-900">Sign Up with Telegram</p>
-                                <p class="text-xs text-gray-500 font-medium">Create your account using Telegram.</p>
-                            </div>
-                        </div>
+                    {{-- Custom Telegram Button Wrapper --}}
+                    <div class="relative w-full flex items-center justify-center gap-3 border border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-bold py-3.5 rounded-2xl transition-all text-sm shadow-sm overflow-hidden cursor-pointer group">
+                        
+                        {{-- Visible Custom UI (Matches Google exactly) --}}
+                        <i class="fa-brands fa-telegram text-[#229ED9] text-base group-hover:scale-110 transition-transform"></i>
+                        <span>Sign Up with Telegram</span>
 
-                        <div class="min-h-[44px] overflow-hidden rounded-xl bg-white flex items-center justify-center">
-                            <script async src="https://telegram.org/js/telegram-widget.js?22"
-                                    data-telegram-login="{{ config('services.telegram.bot_name') }}"
-                                    data-size="large"
-                                    data-userpic="false"
-                                    data-radius="12"
-                                    data-request-access="write"
-                                    data-onauth="handleTelegramAuth(user)">
-                            </script>
+                        {{-- Hidden but Clickable Telegram Widget Overlay --}}
+                        <div class="absolute inset-0 z-10 flex items-center justify-center opacity-[0.01]">
+                            {{-- We scale the iframe up so its clickable area covers the entire button --}}
+                            <div class="scale-[3.5] origin-center">
+                                <script async src="https://telegram.org/js/telegram-widget.js?22"
+                                        data-telegram-login="{{ config('services.telegram.bot_name') }}"
+                                        data-size="large"
+                                        data-userpic="false"
+                                        data-radius="12"
+                                        data-request-access="write"
+                                        data-onauth="handleTelegramAuth(user)">
+                                </script>
+                            </div>
                         </div>
                     </div>
                 @else
-                    <div class="w-full flex items-start gap-3 border border-dashed border-[#229ED9]/30 bg-[#229ED9]/[0.04] text-gray-600 py-3.5 px-4 rounded-2xl text-sm">
-                        <i class="fa-brands fa-telegram text-[#229ED9] mt-0.5"></i>
-                        <div>
-                            <p class="font-bold text-gray-800">Telegram sign-up is disabled</p>
-                            <p class="text-xs font-medium text-gray-500 mt-1">
-                                Set TELEGRAM_BOT_NAME and TELEGRAM_BOT_TOKEN in your .env file.
-                            </p>
-                        </div>
+                    {{-- Disabled State --}}
+                    <div class="w-full flex items-center justify-center gap-3 border border-dashed border-gray-200 bg-gray-50/50 text-gray-400 font-bold py-3.5 rounded-2xl text-sm cursor-not-allowed" 
+                         title="Set TELEGRAM_BOT_NAME and TELEGRAM_BOT_TOKEN in your .env file">
+                        <i class="fa-brands fa-telegram text-gray-400"></i>
+                        <span>Telegram sign-up is disabled</span>
                     </div>
                 @endif
             </div>
