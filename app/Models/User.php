@@ -25,24 +25,25 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
-        'phone',
         'email',
+        'phone',
         'avatar',
         'password',
+        'google_id',
+        'telegram_id',
+        'telegram_username',
+        'telegram_photo_url',
+        'auth_provider',
         'usertype',
+        'status',
+        'last_login_at',
         'blood_type',
         'id_number',
         'kyc_status',
         'kyc_rejected_reason',
         'kyc_verified_at',
         'kyc_verified_by_admin_id',
-        'status',
-        'last_login_at',
         'email_verified_at',
-        'google_id',
-        'telegram_id',
-        'telegram_username',
-        'auth_provider',
     ];
 
     protected $hidden = [
