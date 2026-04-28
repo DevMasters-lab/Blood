@@ -201,5 +201,4 @@ Route::middleware(['auth:admin', 'admin'])->prefix('admin')->group(function () {
     Route::resource('roles', \App\Http\Controllers\Web\RoleController::class)->names('admin.roles');
 });
 Route::post('/telegram/webhook', [UserWebController::class, 'telegramWebhook'])
-    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
     ->name('telegram.webhook');

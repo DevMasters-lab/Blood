@@ -12,7 +12,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        
+
+        // Allow Telegram webhook without CSRF token
+        $middleware->validateCsrfTokens(except: [
+            'telegram/webhook',
+        ]);
+
         // Append your custom Maintenance Mode middleware to the 'web' group
         $middleware->web(append: [
             \App\Http\Middleware\CheckMaintenanceMode::class,
@@ -34,7 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 ? route('admin.dashboard')
                 : route('user.dashboard');
         });
-        
+
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
