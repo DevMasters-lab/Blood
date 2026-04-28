@@ -340,23 +340,21 @@
                 </a>
 
                 @if (config('services.telegram.bot_name'))
-                    <div class="rounded-2xl border border-[#229ED9]/15 bg-[#229ED9]/[0.04] px-4 py-4">
-                        <div class="flex items-center gap-3 mb-3">
-                            <div class="h-10 w-10 rounded-2xl bg-[#229ED9] text-white flex items-center justify-center shadow-sm">
-                                <i class="fa-brands fa-telegram text-base"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm font-black text-gray-900">Sign Up with Telegram</p>
-                                <p class="text-xs text-gray-500 font-medium">Create your account using Telegram.</p>
-                            </div>
-                        </div>
+                    <div class="relative w-full">
+                        <button type="button"
+                                class="w-full flex items-center justify-center gap-3 border border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-bold py-3.5 rounded-2xl transition-all text-sm shadow-sm">
+                            <i class="fa-brands fa-telegram text-[#229ED9]"></i>
+                            <span>Sign Up with Telegram</span>
+                        </button>
 
-                        <div class="min-h-[44px] overflow-hidden rounded-xl bg-white flex items-center justify-center">
+                        {{-- Telegram official login widget is placed above the custom UI.
+                             It loads from Telegram, so this keeps your UI instant while Telegram prepares the real clickable button. --}}
+                        <div class="absolute inset-0 z-10 overflow-hidden rounded-2xl opacity-0">
                             <script async src="https://telegram.org/js/telegram-widget.js?22"
                                     data-telegram-login="{{ config('services.telegram.bot_name') }}"
                                     data-size="large"
                                     data-userpic="false"
-                                    data-radius="12"
+                                    data-radius="16"
                                     data-request-access="write"
                                     data-onauth="handleTelegramAuth(user)">
                             </script>
