@@ -23,14 +23,21 @@ class GoogleAuthController extends Controller
             ['email' => $googleUser->getEmail()],
             [
                 'name' => $googleUser->getName(),
+                'email' => $googleUser->getEmail(),
                 'google_id' => $googleUser->getId(),
-                'password' => bcrypt(Str::random(16)),
+                'avatar' => $googleUser->getAvatar(),
+                'password' => bcrypt(Str::random(32)),
                 'auth_provider' => 'google',
+                'usertype' => 'user',
+                'status' => 'active',
+                'kyc_status' => 'verified',
+                'kyc_verified_at' => now(),
+                'last_login_at' => now(),
             ]
         );
 
-        Auth::login($user);
+        Auth::login($user, true);
 
-        return redirect('/user/dashboard')->with('success', 'Logged in with Google successfully!'); 
+        return redirect('/user/dashboard')->with('success', 'Logged in with Google successfully!');
     }
 }
