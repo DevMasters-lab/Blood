@@ -17,6 +17,7 @@ use Laravel\Socialite\Two\GoogleProvider;
 use Spatie\Permission\Models\Role;
 use Throwable;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 // Notifications
 use App\Notifications\SystemAlert;
@@ -123,17 +124,17 @@ class UserWebController extends Controller
         $payload['last_name'] ?? null,
     ]))) ?: ($payload['username'] ?? 'Telegram User');
 
-    $user = User::where('telegram_id', $payload['id'])->first();
+    $user = User::where('telegram_id', (string) $payload['id'])->first();
 
     if (! $user) {
         $user = User::create([
             'name' => $name,
-            'password' => Str::password(32),
+            'password' => Hash::make(Str::random(32)),
             'usertype' => 'user',
             'kyc_status' => 'verified',
             'kyc_verified_at' => now(),
             'status' => 'active',
-            'telegram_id' => $payload['id'],
+            'telegram_id' => (string) $payload['id'],
             'telegram_username' => $payload['username'] ?? null,
             'telegram_photo_url' => $payload['photo_url'] ?? null,
             'auth_provider' => 'telegram',
@@ -154,19 +155,25 @@ class UserWebController extends Controller
         ])->save();
     }
 
+    /*
+     * Telegram login widget does not send phone number directly.
+     * This sends a Telegram bot message with "Share phone number".
+     * After user clicks it, telegramWebhook() will save users.phone automatically.
+     */
     if (empty($user->phone)) {
         $this->sendTelegramPhoneRequest($user);
     }
 
     return $this->completeLogin($request, $user);
 }
+
 private function sendTelegramPhoneRequest(User $user): void
 {
     if (! $user->telegram_id || ! config('services.telegram.bot_token')) {
         return;
     }
 
-    Http::post('https://api.telegram.org/bot' . config('services.telegram.bot_token') . '/sendMessage', [
+    $response = Http::post('https://api.telegram.org/bot' . config('services.telegram.bot_token') . '/sendMessage', [
         'chat_id' => $user->telegram_id,
         'text' => 'Please share your phone number to complete your BloodShare KH account.',
         'reply_markup' => [
@@ -182,9 +189,19 @@ private function sendTelegramPhoneRequest(User $user): void
             'one_time_keyboard' => true,
         ],
     ]);
+
+    if (! $response->successful()) {
+        Log::error('Telegram phone request failed', [
+            'telegram_id' => $user->telegram_id,
+            'response' => $response->json(),
+        ]);
+    }
 }
+
 public function telegramWebhook(Request $request)
 {
+    Log::info('Telegram webhook received', $request->all());
+
     $message = $request->input('message');
 
     if (! $message) {
@@ -197,26 +214,47 @@ public function telegramWebhook(Request $request)
         return response()->json(['ok' => true]);
     }
 
-    $telegramUserId = $contact['user_id'] ?? null;
+    $fromTelegramId = $message['from']['id'] ?? null;
+    $contactTelegramId = $contact['user_id'] ?? $fromTelegramId;
     $phoneNumber = $contact['phone_number'] ?? null;
 
-    if (! $telegramUserId || ! $phoneNumber) {
+    if (! $contactTelegramId || ! $phoneNumber) {
         return response()->json(['ok' => true]);
     }
 
-    $user = User::where('telegram_id', (string) $telegramUserId)->first();
+    $phoneNumber = preg_replace('/\s+/', '', $phoneNumber);
+
+    if (! str_starts_with($phoneNumber, '+')) {
+        $phoneNumber = '+' . $phoneNumber;
+    }
+
+    $user = User::where('telegram_id', (string) $contactTelegramId)
+        ->orWhere('telegram_id', (string) $fromTelegramId)
+        ->first();
 
     if ($user) {
-        $user->update([
+        $user->forceFill([
             'phone' => $phoneNumber,
-        ]);
+        ])->save();
 
         Http::post('https://api.telegram.org/bot' . config('services.telegram.bot_token') . '/sendMessage', [
-            'chat_id' => $telegramUserId,
+            'chat_id' => $fromTelegramId ?: $contactTelegramId,
             'text' => 'Thank you. Your phone number has been saved successfully.',
             'reply_markup' => [
                 'remove_keyboard' => true,
             ],
+        ]);
+
+        Log::info('Telegram phone saved successfully', [
+            'user_id' => $user->id,
+            'telegram_id' => $user->telegram_id,
+            'phone' => $phoneNumber,
+        ]);
+    } else {
+        Log::warning('Telegram phone received but user not found', [
+            'from_telegram_id' => $fromTelegramId,
+            'contact_telegram_id' => $contactTelegramId,
+            'phone' => $phoneNumber,
         ]);
     }
 
