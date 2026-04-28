@@ -9,6 +9,7 @@ use App\Http\Controllers\Web\NotificationController;
 use App\Models\BloodRequest;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Auth\GoogleAuthController;
+use App\Http\Controllers\Auth\TelegramAuthController;
 
 
 /*
@@ -200,8 +201,12 @@ Route::middleware(['auth:admin', 'admin'])->prefix('admin')->group(function () {
     Route::resource('roles', \App\Http\Controllers\Web\RoleController::class)->names('admin.roles');
 });
 
+    //Auth Routes for Google and Telegram (Moved to the end to avoid conflicts with other routes)
 Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])
     ->name('auth.google.redirect');
 
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])
     ->name('auth.google.callback');
+
+Route::get('/auth/telegram/callback', [TelegramAuthController::class, 'callback'])
+    ->name('auth.telegram.callback');
