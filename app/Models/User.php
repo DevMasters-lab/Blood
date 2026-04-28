@@ -16,9 +16,6 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
-    /**
-     * Keep Spatie roles/permissions on the web guard for this shared users table.
-     */
     protected string $guard_name = 'web';
 
     public function getDefaultGuardName(): string
@@ -26,9 +23,6 @@ class User extends Authenticatable
         return $this->guard_name;
     }
 
-    /**
-     * The attributes that are mass assignable.
-     */
     protected $fillable = [
         'name',
         'phone',
@@ -51,17 +45,11 @@ class User extends Authenticatable
         'auth_provider',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast.
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
@@ -69,44 +57,27 @@ class User extends Authenticatable
         'last_login_at' => 'datetime',
     ];
 
-    // --- Relationships ---
-
-    /**
-     * A user can make many blood requests.
-     */
     public function bloodRequests(): HasMany
     {
         return $this->hasMany(BloodRequest::class, 'requester_id');
     }
 
-    /**
-     * A user can submit many donation invoices.
-     */
     public function donationInvoices(): HasMany
     {
         return $this->hasMany(DonationInvoice::class);
     }
 
-    /**
-     * A user can respond to many requests.
-     */
     public function requestResponses(): HasMany
     {
         return $this->hasMany(RequestResponse::class, 'responder_id');
     }
 
-    /**
-     * The user's ID card photo.
-     */
     public function idPhoto(): MorphOne
     {
         return $this->morphOne(ProofFile::class, 'owner')
             ->where('file_type', 'id_photo');
     }
 
-    /**
-     * All proof files that belong to the user.
-     */
     public function proofFiles(): MorphMany
     {
         return $this->morphMany(ProofFile::class, 'fileable');
