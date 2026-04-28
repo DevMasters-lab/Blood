@@ -199,5 +199,8 @@ Route::middleware(['auth:admin', 'admin'])->prefix('admin')->group(function () {
     Route::resource('roles', \App\Http\Controllers\Web\RoleController::class)->names('admin.roles');
 });
 
-Route::get('/auth/google', [GoogleController::class, 'redirectToGoogle'])->name('google.login');
-Route::get('/auth/google/callback', [GoogleController::class, 'handleGoogleCallback'])->name('google.callback');
+Route::get('/auth/google', [GoogleController::class, 'redirectToGoogle'])
+    ->name('auth.google.redirect');
+
+Route::get('/auth/google/callback', [GoogleController::class, 'handleGoogleCallback'])
+    ->name('auth.google.callback');
