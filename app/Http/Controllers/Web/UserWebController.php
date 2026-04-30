@@ -16,6 +16,8 @@ use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\GoogleProvider;
 use Spatie\Permission\Models\Role;
 use Throwable;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 // Notifications
 use App\Notifications\SystemAlert;
@@ -157,7 +159,109 @@ class UserWebController extends Controller
             ])->save();
         }
 
+        if (empty($user->phone)) {
+            $this->sendTelegramPhoneRequest($user);
+        }
+
         return $this->completeLogin($request, $user);
+    }
+    private function sendTelegramPhoneRequest(User $user): void
+    {
+        if (! $user->telegram_id || ! config('services.telegram.bot_token')) {
+            return;
+        }
+
+        $response = Http::post('https://api.telegram.org/bot' . config('services.telegram.bot_token') . '/sendMessage', [
+            'chat_id' => $user->telegram_id,
+            'text' => 'Please share your phone number to complete your BloodShare KH account.',
+            'reply_markup' => [
+                'keyboard' => [
+                    [
+                        [
+                            'text' => 'Share phone number',
+                            'request_contact' => true,
+                        ],
+                    ],
+                ],
+                'resize_keyboard' => true,
+                'one_time_keyboard' => true,
+            ],
+        ]);
+
+        Log::info('Telegram phone request sent', [
+            'telegram_id' => $user->telegram_id,
+            'response' => $response->json(),
+        ]);
+    }
+    public function telegramWebhook(Request $request)
+    {
+        Log::info('Telegram webhook received', $request->all());
+
+        $message = $request->input('message');
+
+        if (! $message) {
+            return response()->json(['ok' => true]);
+        }
+
+        $contact = $message['contact'] ?? null;
+
+        if (! $contact) {
+            return response()->json(['ok' => true]);
+        }
+
+        $fromTelegramId = $message['from']['id'] ?? null;
+        $contactTelegramId = $contact['user_id'] ?? $fromTelegramId;
+        $phoneNumber = $contact['phone_number'] ?? null;
+
+        if (! $contactTelegramId || ! $phoneNumber) {
+            Log::warning('Telegram contact missing data', [
+                'from_telegram_id' => $fromTelegramId,
+                'contact_telegram_id' => $contactTelegramId,
+                'phone' => $phoneNumber,
+            ]);
+
+            return response()->json(['ok' => true]);
+        }
+
+        $phoneNumber = preg_replace('/\s+/', '', $phoneNumber);
+
+        if (! str_starts_with($phoneNumber, '+')) {
+            $phoneNumber = '+' . $phoneNumber;
+        }
+
+        $user = User::where('telegram_id', (string) $contactTelegramId)
+            ->orWhere('telegram_id', (string) $fromTelegramId)
+            ->first();
+
+        if (! $user) {
+            Log::warning('Telegram phone received but user not found', [
+                'from_telegram_id' => $fromTelegramId,
+                'contact_telegram_id' => $contactTelegramId,
+                'phone' => $phoneNumber,
+            ]);
+
+            return response()->json(['ok' => true]);
+        }
+
+        $user->forceFill([
+            'phone' => $phoneNumber,
+        ])->save();
+
+        Http::post('https://api.telegram.org/bot' . config('services.telegram.bot_token') . '/sendMessage', [
+            'chat_id' => $fromTelegramId ?: $contactTelegramId,
+            'text' => 'Thank you. Your phone number has been saved successfully.',
+            'reply_markup' => [
+                'remove_keyboard' => true,
+            ],
+        ]);
+
+        Log::info('Telegram phone saved successfully', [
+            'user_id' => $user->id,
+            'telegram_id' => $user->telegram_id,
+            'phone' => $phoneNumber,
+        ]);
+
+        return response()->json(['ok' => true]);
     }
 
     // --- Auth Logic ---
