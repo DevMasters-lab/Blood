@@ -99,7 +99,7 @@ class UserWebController extends Controller
 {
     if (! config('services.telegram.bot_name') || ! config('services.telegram.bot_token')) {
         return redirect()->route('user.login')->withErrors([
-            'identifier' => 'Telegram sign-in is not configured yet. Add your Telegram bot settings first.',
+            'identifier' => 'Telegram sign-in is not configured yet.',
         ]);
     }
 
@@ -119,18 +119,30 @@ class UserWebController extends Controller
         ]);
     }
 
-    $name = trim(implode(' ', array_filter([
-        $payload['first_name'] ?? null,
-        $payload['last_name'] ?? null,
-    ]))) ?: ($payload['username'] ?? 'Telegram User');
-
     $telegramId = (string) $payload['id'];
     $telegramUsername = $payload['username'] ?? null;
     $telegramAvatar = $payload['photo_url'] ?? null;
 
+    $name = trim(implode(' ', array_filter([
+        $payload['first_name'] ?? null,
+        $payload['last_name'] ?? null,
+    ]))) ?: ($telegramUsername ?? 'Telegram User');
+
+    /**
+     * mode=signup means this request comes from the Sign Up page.
+     * mode=login means this request comes from the Login page.
+     */
+    $mode = $request->query('mode', 'login');
+
     $user = User::where('telegram_id', $telegramId)->first();
 
-    if (! $user) {
+    if ($mode === 'signup') {
+        if ($user) {
+            return redirect()->route('user.register')->withErrors([
+                'telegram' => 'This Telegram account is already registered. Please login instead, or use another Telegram account.',
+            ]);
+        }
+
         $user = User::create([
             'name' => $name,
             'password' => Str::password(32),
@@ -146,18 +158,29 @@ class UserWebController extends Controller
         ]);
 
         $this->assignDefaultUserRole($user);
-    } else {
-        $user->forceFill([
-            'name' => $user->name ?: $name,
-            'telegram_username' => $telegramUsername ?? $user->telegram_username,
-            'avatar' => $telegramAvatar ?: $user->avatar,
-            'auth_provider' => $user->auth_provider ?: 'telegram',
-            'kyc_status' => $user->kyc_status ?: 'verified',
-            'kyc_verified_at' => $user->kyc_verified_at ?: now(),
-            'status' => $user->status ?: 'active',
-            'last_login_at' => now(),
-        ])->save();
+
+        if (empty($user->phone)) {
+            $this->sendTelegramPhoneRequest($user);
+        }
+
+        return $this->completeLogin($request, $user);
     }
+
+    /**
+     * Login mode
+     */
+    if (! $user) {
+        return redirect()->route('user.login')->withErrors([
+            'identifier' => 'No account found with this Telegram account. Please sign up first.',
+        ]);
+    }
+
+    $user->forceFill([
+        'telegram_username' => $telegramUsername ?? $user->telegram_username,
+        'avatar' => $telegramAvatar ?: $user->avatar,
+        'auth_provider' => $user->auth_provider ?: 'telegram',
+        'last_login_at' => now(),
+    ])->save();
 
     if (empty($user->phone)) {
         $this->sendTelegramPhoneRequest($user);
@@ -165,7 +188,6 @@ class UserWebController extends Controller
 
     return $this->completeLogin($request, $user);
 }
-
 private function sendTelegramPhoneRequest(User $user): void
 {
     if (! $user->telegram_id || ! config('services.telegram.bot_token')) {
