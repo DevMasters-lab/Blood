@@ -42,7 +42,6 @@ class User extends Authenticatable
         'google_id',
         'telegram_id',
         'telegram_username',
-        'telegram_photo_url',
         'auth_provider',
     ];
 
