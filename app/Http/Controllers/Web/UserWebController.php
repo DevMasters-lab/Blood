@@ -122,7 +122,11 @@ class UserWebController extends Controller
             $payload['last_name'] ?? null,
         ]))) ?: ($payload['username'] ?? 'Telegram User');
 
-        $user = User::where('telegram_id', $payload['id'])->first();
+        $telegramId = (string) $payload['id'];
+        $telegramUsername = $payload['username'] ?? null;
+        $telegramAvatar = $payload['photo_url'] ?? null;
+
+        $user = User::where('telegram_id', $telegramId)->first();
 
         if (! $user) {
             $user = User::create([
@@ -130,18 +134,26 @@ class UserWebController extends Controller
                 'password' => Str::password(32),
                 'usertype' => 'user',
                 'kyc_status' => 'verified',
+                'kyc_verified_at' => now(),
                 'status' => 'active',
-                'telegram_id' => $payload['id'],
-                'telegram_username' => $payload['username'] ?? null,
+                'telegram_id' => $telegramId,
+                'telegram_username' => $telegramUsername,
+                'avatar' => $telegramAvatar,
                 'auth_provider' => 'telegram',
+                'last_login_at' => now(),
             ]);
 
             $this->assignDefaultUserRole($user);
         } else {
             $user->forceFill([
                 'name' => $user->name ?: $name,
-                'telegram_username' => $payload['username'] ?? $user->telegram_username,
+                'telegram_username' => $telegramUsername ?? $user->telegram_username,
+                'avatar' => $telegramAvatar ?: $user->avatar,
                 'auth_provider' => $user->auth_provider ?: 'telegram',
+                'kyc_status' => $user->kyc_status ?: 'verified',
+                'kyc_verified_at' => $user->kyc_verified_at ?: now(),
+                'status' => $user->status ?: 'active',
+                'last_login_at' => now(),
             ])->save();
         }
 

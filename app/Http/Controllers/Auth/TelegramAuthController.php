@@ -22,7 +22,7 @@ class TelegramAuthController extends Controller
             'hash',
         ]);
 
-        if (!$this->checkTelegramAuthorization($data)) {
+        if (! $this->checkTelegramAuthorization($data)) {
             return redirect()->route('login')
                 ->withErrors(['telegram' => 'Telegram authentication failed.']);
         }
@@ -33,6 +33,8 @@ class TelegramAuthController extends Controller
             $name = $data['username'] ?? 'Telegram User';
         }
 
+        $telegramAvatar = $data['photo_url'] ?? null;
+
         $user = User::updateOrCreate(
             [
                 'telegram_id' => (string) $data['id'],
@@ -40,10 +42,12 @@ class TelegramAuthController extends Controller
             [
                 'name' => $name,
                 'telegram_username' => $data['username'] ?? null,
-                'telegram_photo_url' => $data['photo_url'] ?? null,
+                'avatar' => $telegramAvatar,
                 'auth_provider' => 'telegram',
                 'password' => bcrypt(Str::random(32)),
                 'status' => 'active',
+                'kyc_status' => 'verified',
+                'kyc_verified_at' => now(),
                 'last_login_at' => now(),
             ]
         );
@@ -76,7 +80,7 @@ class TelegramAuthController extends Controller
 
         $botToken = config('services.telegram.bot_token');
 
-        if (!$botToken) {
+        if (! $botToken) {
             return false;
         }
 
