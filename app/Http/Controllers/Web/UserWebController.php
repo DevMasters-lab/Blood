@@ -19,6 +19,7 @@ use Throwable;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
+
 // Notifications
 use App\Notifications\SystemAlert;
 use Illuminate\Support\Facades\Notification;
@@ -127,6 +128,7 @@ class UserWebController extends Controller
         $telegramId = (string) $payload['id'];
         $telegramUsername = $payload['username'] ?? null;
         $telegramAvatar = $payload['photo_url'] ?? null;
+        $telegramAvatar = $this->saveTelegramAvatar($telegramAvatar, (string) $payload['id']);
 
         $user = User::where('telegram_id', $telegramId)->first();
 
@@ -262,6 +264,56 @@ class UserWebController extends Controller
         ]);
 
         return response()->json(['ok' => true]);
+    }
+    private function saveTelegramAvatar(?string $photoUrl, string $telegramId): ?string
+    {
+        if (! $photoUrl) {
+            return null;
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'User-Agent' => 'Mozilla/5.0',
+            ])->timeout(20)->get($photoUrl);
+
+            if (! $response->successful()) {
+                Log::warning('Telegram avatar download failed', [
+                    'telegram_id' => $telegramId,
+                    'photo_url' => $photoUrl,
+                    'status' => $response->status(),
+                ]);
+
+                return null;
+            }
+
+            $contentType = $response->header('Content-Type');
+
+            if (! str_contains($contentType, 'image')) {
+                Log::warning('Telegram avatar response is not image', [
+                    'telegram_id' => $telegramId,
+                    'photo_url' => $photoUrl,
+                    'content_type' => $contentType,
+                ]);
+
+                return null;
+            }
+
+            $extension = str_contains($contentType, 'png') ? 'png' : 'jpg';
+
+            $path = 'avatars/telegram-' . $telegramId . '.' . $extension;
+
+            Storage::disk('public')->put($path, $response->body());
+
+            return $path;
+        } catch (\Throwable $e) {
+            Log::error('Telegram avatar save error', [
+                'telegram_id' => $telegramId,
+                'photo_url' => $photoUrl,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     // --- Auth Logic ---
