@@ -128,18 +128,24 @@ class UserWebController extends Controller
         $payload['last_name'] ?? null,
     ]))) ?: ($telegramUsername ?? 'Telegram User');
 
-    /**
-     * mode=signup means this request comes from the Sign Up page.
-     * mode=login means this request comes from the Login page.
-     */
     $mode = $request->query('mode', 'login');
 
     $user = User::where('telegram_id', $telegramId)->first();
 
+    /**
+     * SIGN UP MODE
+     * Important:
+     * If Telegram account already exists, do NOT login.
+     * This prevents your browser from logging into your friend's Telegram account.
+     */
     if ($mode === 'signup') {
         if ($user) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
             return redirect()->route('user.register')->withErrors([
-                'telegram' => 'This Telegram account is already registered. Please login instead, or use another Telegram account.',
+                'telegram' => 'This Telegram account is already registered. Please logout Telegram from your browser first, then sign up with your own Telegram account.',
             ]);
         }
 
@@ -167,9 +173,13 @@ class UserWebController extends Controller
     }
 
     /**
-     * Login mode
+     * LOGIN MODE
      */
     if (! $user) {
+        Auth::guard('web')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
         return redirect()->route('user.login')->withErrors([
             'identifier' => 'No account found with this Telegram account. Please sign up first.',
         ]);
@@ -188,6 +198,7 @@ class UserWebController extends Controller
 
     return $this->completeLogin($request, $user);
 }
+
 private function sendTelegramPhoneRequest(User $user): void
 {
     if (! $user->telegram_id || ! config('services.telegram.bot_token')) {
@@ -248,11 +259,6 @@ public function telegramWebhook(Request $request)
         return response()->json(['ok' => true]);
     }
 
-    /*
-     * Important security check:
-     * Only save phone number if the shared contact belongs to the same Telegram user.
-     * This prevents another device/user from saving the wrong phone number to your account.
-     */
     if ((string) $fromTelegramId !== (string) $contactTelegramId) {
         Log::warning('Telegram contact rejected because sender and contact are different', [
             'from_telegram_id' => $fromTelegramId,

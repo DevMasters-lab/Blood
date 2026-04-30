@@ -342,14 +342,13 @@
                 @if (config('services.telegram.bot_name'))
                     {{-- Custom Telegram Button Wrapper --}}
                     <div class="relative w-full flex items-center justify-center gap-3 border border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-bold py-3.5 rounded-2xl transition-all text-sm shadow-sm overflow-hidden cursor-pointer group">
-                        
-                        {{-- Visible Custom UI (Matches Google exactly) --}}
+
+                        {{-- Visible Custom UI --}}
                         <i class="fa-brands fa-telegram text-[#229ED9] text-base group-hover:scale-110 transition-transform"></i>
                         <span>Sign Up with Telegram</span>
 
                         {{-- Hidden but Clickable Telegram Widget Overlay --}}
                         <div class="absolute inset-0 z-10 flex items-center justify-center opacity-[0.01]">
-                            {{-- We scale the iframe up so its clickable area covers the entire button --}}
                             <div class="scale-[3.5] origin-center">
                                 <script async src="https://telegram.org/js/telegram-widget.js?22"
                                         data-telegram-login="{{ config('services.telegram.bot_name') }}"
@@ -357,15 +356,24 @@
                                         data-userpic="false"
                                         data-radius="12"
                                         data-request-access="write"
-                                        data-onauth="handleTelegramAuth(user)">
+                                        data-onauth="handleTelegramSignup(user)">
                                 </script>
                             </div>
                         </div>
                     </div>
+
+                    <script>
+                        function handleTelegramSignup(user) {
+                            const params = new URLSearchParams(user);
+                            params.append('mode', 'signup');
+
+                            window.location.href = "{{ route('telegram.callback') }}?" + params.toString();
+                        }
+                    </script>
                 @else
                     {{-- Disabled State --}}
-                    <div class="w-full flex items-center justify-center gap-3 border border-dashed border-gray-200 bg-gray-50/50 text-gray-400 font-bold py-3.5 rounded-2xl text-sm cursor-not-allowed" 
-                         title="Set TELEGRAM_BOT_NAME and TELEGRAM_BOT_TOKEN in your .env file">
+                    <div class="w-full flex items-center justify-center gap-3 border border-dashed border-gray-200 bg-gray-50/50 text-gray-400 font-bold py-3.5 rounded-2xl text-sm cursor-not-allowed"
+                        title="Set TELEGRAM_BOT_NAME and TELEGRAM_BOT_TOKEN in your .env file">
                         <i class="fa-brands fa-telegram text-gray-400"></i>
                         <span>Telegram sign-up is disabled</span>
                     </div>
