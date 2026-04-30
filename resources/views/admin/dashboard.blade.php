@@ -9,7 +9,7 @@
             <div class="relative group">
                 <div class="absolute -inset-2 bg-gradient-to-r from-[#D32F2F] to-[#FF5252] rounded-full blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
                 @if(auth()->user()->avatar)
-                    <img src="{{ asset('storage/' . auth()->user()->avatar) }}" class="relative w-24 h-24 rounded-[2rem] object-cover border-4 border-white shadow-xl">
+                    <img src="{{ \Illuminate\Support\Str::startsWith(auth()->user()->avatar, ['http://', 'https://']) ? auth()->user()->avatar : asset('storage/' . auth()->user()->avatar) }}" class="relative w-24 h-24 rounded-[2rem] object-cover border-4 border-white shadow-xl">
                 @else
                     <div class="relative w-24 h-24 rounded-[2rem] bg-gray-50 flex items-center justify-center text-[#D32F2F] text-4xl shadow-xl border-4 border-white">
                         <i class="fa-solid fa-user-shield"></i>
