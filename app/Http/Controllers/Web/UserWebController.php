@@ -18,8 +18,6 @@ use Spatie\Permission\Models\Role;
 use Throwable;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-
-// Notifications
 use App\Notifications\SystemAlert;
 use Illuminate\Support\Facades\Notification;
 
